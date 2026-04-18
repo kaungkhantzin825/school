@@ -23,7 +23,7 @@ const SuperAdminDashboard = () => {
   const [users,        setUsers]        = useState<User[]>([]);
   const [stats,        setStats]        = useState({ total_universities: 0, active_universities: 0, total_students: 0, total_verifications: 0, success_rate: 0 });
   const [activities,   setActivities]   = useState<any[]>([]);
-  const [loading,      setLoading]      = useState(false);
+  const [_loading,     setLoading]      = useState(false);
 
   /* Modals */
   const [uniModal,  setUniModal]  = useState(false);
@@ -66,7 +66,7 @@ const SuperAdminDashboard = () => {
 
   /* University CRUD */
   const openAddUni  = () => { setEditUni(null); setUniForm(initUni); setUniModal(true); };
-  const openEditUni = (u: University) => { setEditUni(u); setUniForm({ name: u.name, location: u.location, description: u.description || '', logo_url: u.logo_url || '', status: u.status }); setUniModal(true); };
+  const openEditUni = (u: University) => { setEditUni(u); setUniForm({ name: u.name, location: u.location, description: u.description || '', logo_url: u.logo_url || '', status: u.status as 'active' }); setUniModal(true); };
   const saveUni = async () => {
     try {
       if (editUni) await universityAPI.update(editUni.id, uniForm);
@@ -103,7 +103,7 @@ const SuperAdminDashboard = () => {
   const filteredUsers = users.filter(u => `${u.name} ${u.email}`.toLowerCase().includes(userSearch.toLowerCase()));
 
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const barData = months.map((m, i) => ({ label: m, value: Math.floor(Math.random() * 900 + 200) }));
+  const barData = months.map((m) => ({ label: m, value: Math.floor(Math.random() * 900 + 200) }));
 
   const initials = (name: string) => name?.split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2) || 'SA';
 
