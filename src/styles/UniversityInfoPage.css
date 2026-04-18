@@ -1,0 +1,156 @@
+/* UniversityInfoPage.css */
+
+.university-info-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(26, 86, 219, 0.12) 0%, transparent 70%),
+    linear-gradient(160deg, #f8faff 0%, #eef2ff 50%, #f0f4f8 100%);
+}
+
+.info-card {
+  width: 100%;
+  max-width: 620px;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06);
+  overflow: hidden;
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+/* ── Card header banner ── */
+.info-card-banner {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+  padding: 2.5rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.info-card-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.uni-shield {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #1a56db, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(26, 86, 219, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.uni-title-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+.uni-title-wrap h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.3;
+  margin-bottom: 0.35rem;
+}
+
+.uni-location-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(255,255,255,0.12);
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-weight: 500;
+}
+
+/* ── Card body ── */
+.info-card-body {
+  padding: 2rem;
+}
+
+.info-description {
+  font-size: 0.95rem;
+  color: #475569;
+  line-height: 1.8;
+  margin-bottom: 1.75rem;
+  border-left: 3px solid var(--primary);
+  padding-left: 1rem;
+}
+
+/* ── Info pills ── */
+.info-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.info-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #f1f5f9;
+  color: #334155;
+  padding: 5px 14px;
+  border-radius: 100px;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+/* ── Actions ── */
+.info-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn-back {
+  flex: 0 0 auto;
+  padding: 0.85rem 1.5rem;
+  background: #f1f5f9;
+  color: #475569;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+}
+.btn-back:hover { background: #e2e8f0; color: #0f172a; }
+
+.btn-verify {
+  flex: 1;
+  padding: 0.85rem 1.5rem;
+  background: linear-gradient(135deg, #1a56db, #2563eb);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: 0 4px 14px rgba(26, 86, 219, 0.35);
+  font-family: inherit;
+  letter-spacing: 0.01em;
+}
+.btn-verify:hover {
+  background: linear-gradient(135deg, #1241a8, #1d4ed8);
+  box-shadow: 0 6px 20px rgba(26, 86, 219, 0.45);
+  transform: translateY(-2px);
+}

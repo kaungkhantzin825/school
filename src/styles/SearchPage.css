@@ -1,0 +1,244 @@
+/* SearchPage.css */
+
+/* ── Hero wrapper ── */
+.search-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(26, 86, 219, 0.18) 0%, transparent 70%),
+    linear-gradient(160deg, #f8faff 0%, #eef2ff 50%, #f0f4f8 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Decorative blobs */
+.search-page::before,
+.search-page::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  opacity: 0.5;
+}
+.search-page::before {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(26,86,219,0.15), transparent 70%);
+  top: -150px; left: -120px;
+}
+.search-page::after {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(245,158,11,0.12), transparent 70%);
+  bottom: -100px; right: -100px;
+}
+
+/* ── Brand header ── */
+.search-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 3rem;
+  animation: fadeInUp 0.5s ease-out both;
+}
+
+.brand-icon-wrap {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #1a56db, #3b82f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  box-shadow: 0 8px 32px rgba(26, 86, 219, 0.35);
+  margin-bottom: 0.25rem;
+}
+
+.brand-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.brand-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  text-align: center;
+  font-weight: 400;
+}
+
+/* ── Search card ── */
+.search-container {
+  width: 100%;
+  max-width: 680px;
+  position: relative;
+  z-index: 1;
+  animation: fadeInUp 0.6s 0.1s ease-out both;
+}
+
+.search-label {
+  display: block;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #334155;
+  margin-bottom: 1rem;
+}
+
+/* ── Search box ── */
+.search-box {
+  display: flex;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow:
+    0 4px 24px rgba(26, 86, 219, 0.12),
+    0 1px 4px rgba(0,0,0,0.06),
+    inset 0 0 0 1.5px rgba(26, 86, 219, 0.15);
+  overflow: visible;
+  position: relative;
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.search-box:focus-within {
+  box-shadow:
+    0 8px 32px rgba(26, 86, 219, 0.22),
+    0 2px 8px rgba(0,0,0,0.08),
+    inset 0 0 0 2px var(--primary);
+  transform: translateY(-2px);
+}
+
+.search-input {
+  flex: 1;
+  padding: 1.1rem 1.5rem;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: #0f172a;
+  outline: none;
+  border-radius: 16px 0 0 16px;
+  font-family: inherit;
+}
+
+.search-input::placeholder {
+  color: #94a3b8;
+}
+
+.search-button {
+  padding: 0.8rem 2rem;
+  margin: 0.35rem 0.35rem 0.35rem 0;
+  background: linear-gradient(135deg, #1a56db, #2563eb);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+  box-shadow: 0 3px 10px rgba(26, 86, 219, 0.35);
+}
+
+.search-button:hover {
+  background: linear-gradient(135deg, #1241a8, #1d4ed8);
+  box-shadow: 0 6px 18px rgba(26, 86, 219, 0.45);
+  transform: translateY(-1px);
+}
+
+/* ── Loading ── */
+.search-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.5rem;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.search-spinner {
+  width: 16px; height: 16px;
+  border: 2px solid #e2e8f0;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ── Suggestions dropdown ── */
+.suggestions-list {
+  margin-top: 0.75rem;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.12),
+    0 2px 8px rgba(0,0,0,0.06),
+    inset 0 0 0 1px rgba(0,0,0,0.05);
+  overflow: hidden;
+  animation: scaleIn 0.2s ease-out;
+  transform-origin: top center;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.25rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.18s ease;
+  color: #334155;
+}
+
+.suggestion-item:last-child { border-bottom: none; }
+
+.suggestion-item:hover {
+  background: #f8faff;
+  color: var(--primary);
+}
+
+.suggestion-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  opacity: 0.7;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.suggestion-info strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.suggestion-info span {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+/* ── Animations ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scaleY(0.95); }
+  to   { opacity: 1; transform: scaleY(1); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
