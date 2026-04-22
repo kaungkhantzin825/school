@@ -124,3 +124,21 @@ export const userAPI = {
   delete: (id: number) =>
     api.delete(`/users/${id}`),
 };
+
+// Degree API
+export const degreeAPI = {
+  getAll: (params?: any) =>
+    api.get('/degrees', { params }),
+  
+  getOne: (id: number) =>
+    api.get(`/degrees/${id}`),
+  
+  create: (data: any) =>
+    api.post('/degrees', data),
+  
+  update: (id: number, data: any) =>
+    api.put(`/degrees/${id}`, data),
+  
+  delete: (id: number) =>
+    api.delete(`/degrees/${id}`),
+};

@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { studentAPI, verificationAPI } from '../../services/api';
+import { studentAPI, verificationAPI, degreeAPI } from '../../services/api';
 import '../../styles/admin/UserAdminDashboard.css';
 
-type Tab = 'upload' | 'students' | 'logs';
+type Tab = 'upload' | 'students' | 'logs' | 'degree' | 'addstudent';
 
 interface Student {
   id: number;
@@ -34,12 +33,21 @@ interface Log {
 const PAGE_SIZE = 10;
 
 const UserAdminDashboard = () => {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  
+  // Get user from localStorage
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  
+  const logout = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
 
   const [tab,     setTab]     = useState<Tab>('upload');
   const [students, setStudents] = useState<Student[]>([]);
   const [logs,     setLogs]     = useState<Log[]>([]);
+  const [degrees,  setDegrees]  = useState<any[]>([]);
   const [loading,  setLoading]  = useState(false);
 
   /* Upload */
@@ -59,9 +67,93 @@ const UserAdminDashboard = () => {
   const [logSearch, setLogSearch] = useState('');
   const [logPage,   setLogPage]   = useState(1);
 
+  /* Degree Management */
+  const [degreeModal, setDegreeModal] = useState(false);
+  const [editDegree, setEditDegree] = useState<any>(null);
+  const [degreeForm, setDegreeForm] = useState({ name: '', description: '', code: '', level: 'bachelor', status: 'active' });
+  const [degreeSubmitting, setDegreeSubmitting] = useState(false);
+
+  const setDF = (k: string, v: string) => setDegreeForm(p => ({ ...p, [k]: v }));
+
+  const openAddDegree = () => { setEditDegree(null); setDegreeForm({ name: '', description: '', code: '', level: 'bachelor', status: 'active' }); setDegreeModal(true); };
+  const openEditDegree = (d: any) => { setEditDegree(d); setDegreeForm({ name: d.name, description: d.description || '', code: d.code || '', level: d.level || 'bachelor', status: d.status || 'active' }); setDegreeModal(true); };
+
+  const saveDegree = async () => {
+    if (!degreeForm.name.trim()) { alert('Degree name is required'); return; }
+    if (!user?.university_id) { alert('University ID not found'); return; }
+    setDegreeSubmitting(true);
+    try {
+      const payload = { ...degreeForm, university_id: user.university_id };
+      if (editDegree) await degreeAPI.update(editDegree.id, payload);
+      else await degreeAPI.create(payload);
+      setDegreeModal(false);
+      fetchDegrees();
+    } catch (e: any) {
+      alert(e.response?.data?.message || 'Failed to save degree');
+    } finally {
+      setDegreeSubmitting(false);
+    }
+  };
+
+  const deleteDegree = async (id: number) => {
+    if (!confirm('Delete this degree?')) return;
+    try {
+      await degreeAPI.delete(id);
+      fetchDegrees();
+    } catch (e: any) {
+      alert(e.response?.data?.message || 'Failed to delete degree');
+    }
+  };
+
+  /* Add Student Manually */
+  const [studentForm, setStudentForm] = useState({
+    graduate_name: '',
+    father_name: '',
+    gender: 'Male',
+    date_of_birth: '',
+    nrc_number: '',
+    student_id: '',
+    degree: '',
+    specialization: '',
+    graduation_year: new Date().getFullYear(),
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  const setSF = (k: string, v: string | number) => setStudentForm(p => ({ ...p, [k]: v }));
+
+  const handleManualSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.university_id) { alert('University ID not found'); return; }
+    setSubmitting(true);
+    setSubmitSuccess(false);
+    try {
+      await studentAPI.create({ ...studentForm, university_id: user.university_id });
+      setSubmitSuccess(true);
+      setStudentForm({
+        graduate_name: '',
+        father_name: '',
+        gender: 'Male',
+        date_of_birth: '',
+        nrc_number: '',
+        student_id: '',
+        degree: '',
+        specialization: '',
+        graduation_year: new Date().getFullYear(),
+      });
+      setTimeout(() => setSubmitSuccess(false), 3000);
+    } catch (e: any) {
+      alert(e.response?.data?.message || 'Failed to add student');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   useEffect(() => {
-    if (tab === 'students') fetchStudents();
-    if (tab === 'logs')     fetchLogs();
+    if (tab === 'students')   fetchStudents();
+    if (tab === 'logs')       fetchLogs();
+    if (tab === 'degree')     fetchDegrees();
+    if (tab === 'addstudent') { fetchDegrees(); setSubmitSuccess(false); }
   }, [tab]);
 
   const fetchStudents = async () => {
@@ -83,6 +175,15 @@ const UserAdminDashboard = () => {
       const res = await verificationAPI.getLogs(params);
       setLogs(res.data.data || res.data);
     } catch { setLogs(DEMO_LOGS); }
+    finally { setLoading(false); }
+  };
+
+  const fetchDegrees = async () => {
+    setLoading(true);
+    try {
+      const res = await degreeAPI.getAll();
+      setDegrees(res.data.data || res.data);
+    } catch { setDegrees([]); }
     finally { setLoading(false); }
   };
 
@@ -186,9 +287,11 @@ const UserAdminDashboard = () => {
 
         <nav className="ud-nav">
           {([
-            ['upload',   '📁', 'Data Upload'],
-            ['students', '👨‍🎓', 'All Students'],
-            ['logs',     '📋', 'Activity Logs'],
+            ['upload',     '📁', 'Data Upload'],
+            ['students',   '👨‍🎓', 'All Students'],
+            ['logs',       '📋', 'Activity Logs'],
+            ['degree',     '🎓', 'Degree'],
+            ['addstudent', '➕', 'Add Student Manually'],
           ] as [Tab, string, string][]).map(([id, icon, label]) => (
             <button
               key={id}
@@ -218,12 +321,14 @@ const UserAdminDashboard = () => {
         {/* Topbar */}
         <div className="ud-topbar">
           <span className="ud-topbar-title">
-            {tab === 'upload'   && '📁 Data Upload'}
-            {tab === 'students' && '👨‍🎓 All Students'}
-            {tab === 'logs'     && '📋 Verifier Activity Logs'}
+            {tab === 'upload'     && '📁 Data Upload'}
+            {tab === 'students'   && '👨‍🎓 All Students'}
+            {tab === 'logs'       && '📋 Verifier Activity Logs'}
+            {tab === 'degree'     && '🎓 Degree Management'}
+            {tab === 'addstudent' && '➕ Add Student Manually'}
           </span>
           <div className="ud-topbar-right">
-            <button className="ud-icon-btn" onClick={() => { if (tab === 'students') fetchStudents(); if (tab === 'logs') fetchLogs(); }} title="Refresh">🔄</button>
+            <button className="ud-icon-btn" onClick={() => { if (tab === 'students') fetchStudents(); if (tab === 'logs') fetchLogs(); if (tab === 'degree') fetchDegrees(); }} title="Refresh">🔄</button>
           </div>
         </div>
 
@@ -553,8 +658,364 @@ const UserAdminDashboard = () => {
               )}
             </div>
           )}
+
+          {/* ── DEGREE TAB (Degree Management) ── */}
+          {tab === 'degree' && (
+            <div className="ud-table-card">
+              <div className="ud-table-header">
+                <div>
+                  <div className="ud-table-title">Degree Management</div>
+                  <div className="ud-table-meta">{degrees.length} degrees</div>
+                </div>
+                <button className="btn-add" onClick={openAddDegree} style={{ background: '#10b981', color: 'white', padding: '0.625rem 1.25rem', borderRadius: '8px', border: 'none', fontWeight: 600, cursor: 'pointer' }}>
+                  ＋ Add Degree
+                </button>
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table className="ud-table">
+                  <thead>
+                    <tr>
+                      <th>No.</th>
+                      <th>Degree Name</th>
+                      <th>Code</th>
+                      <th>Level</th>
+                      <th>Description</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      <tr><td colSpan={6} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Loading degrees...</td></tr>
+                    ) : degrees.length === 0 ? (
+                      <tr><td colSpan={6}>
+                        <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem', color: '#94a3b8', textAlign: 'center' }}>
+                          <span style={{ fontSize: '3rem' }}>🎓</span>
+                          <p>No degrees found. Click "Add Degree" to create one.</p>
+                        </div>
+                      </td></tr>
+                    ) : degrees.map((d, i) => (
+                      <tr key={d.id || i}>
+                        <td>{i + 1}</td>
+                        <td className="td-name" style={{ fontWeight: 600, color: '#1e293b' }}>{d.name}</td>
+                        <td><code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', fontSize: '0.8rem' }}>{d.code}</code></td>
+                        <td>
+                          <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: '100px', fontSize: '0.78rem', fontWeight: 600, textTransform: 'capitalize' }}>
+                            {d.level}
+                          </span>
+                        </td>
+                        <td style={{ color: '#64748b' }}>{d.description || '—'}</td>
+                        <td>
+                          <button 
+                            className="action-btn action-edit" 
+                            onClick={() => openEditDegree(d)}
+                            style={{ background: '#3b82f6', color: 'white', padding: '0.375rem 0.75rem', borderRadius: '6px', border: 'none', marginRight: '0.5rem', cursor: 'pointer', fontSize: '0.8rem' }}
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button 
+                            className="action-btn action-delete" 
+                            onClick={() => deleteDegree(d.id)}
+                            style={{ background: '#ef4444', color: 'white', padding: '0.375rem 0.75rem', borderRadius: '6px', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}
+                          >
+                            🗑️ Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── ADD STUDENT MANUALLY TAB ── */}
+          {tab === 'addstudent' && (
+            <div className="section-card">
+              <div className="section-card-header">
+                <div>
+                  <div className="sc-title">🎓 Add Student Manually</div>
+                  <div className="sc-sub">Enter individual student information</div>
+                </div>
+              </div>
+
+              {submitSuccess && (
+                <div className="upload-result" style={{ margin: '1.5rem' }}>
+                  <span className="upload-result-icon">✅</span>
+                  <div className="upload-result-info">
+                    <strong>Student Added Successfully!</strong>
+                    <span>The student record has been saved to the database.</span>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleManualSubmit} style={{ padding: '1.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
+                  
+                  {/* Graduate Name */}
+                  <div className="form-group">
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                      Graduate Name <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="modal-input"
+                      value={studentForm.graduate_name}
+                      onChange={e => setSF('graduate_name', e.target.value)}
+                      placeholder="e.g. Maung Maung Aye"
+                      required
+                      style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                    />
+                  </div>
+
+                  {/* Father Name */}
+                  <div className="form-group">
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                      Father Name <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="modal-input"
+                      value={studentForm.father_name}
+                      onChange={e => setSF('father_name', e.target.value)}
+                      placeholder="e.g. U Kyaw Zin"
+                      required
+                      style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                    />
+                  </div>
+
+                  {/* Gender */}
+                  <div className="form-group">
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                      Gender <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <select
+                      className="modal-input"
+                      value={studentForm.gender}
+                      onChange={e => setSF('gender', e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+
+                  {/* Date of Birth */}
+                  <div className="form-group">
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                      Date of Birth <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="date"
+                      className="modal-input"
+                      value={studentForm.date_of_birth}
+                      onChange={e => setSF('date_of_birth', e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                    />
+                  </div>
+
+                  {/* NRC Number */}
+                  <div className="form-group">
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                      NRC Number <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="modal-input"
+                      value={studentForm.nrc_number}
+                      onChange={e => setSF('nrc_number', e.target.value)}
+                      placeholder="e.g. 12/OUKAMA(N)123456"
+                      required
+                      style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                    />
+                  </div>
+
+                  {/* Student ID */}
+                  <div className="form-group">
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                      Student ID
+                    </label>
+                    <input
+                      type="text"
+                      className="modal-input"
+                      value={studentForm.student_id}
+                      onChange={e => setSF('student_id', e.target.value)}
+                      placeholder="e.g. CS-2019-001"
+                      style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                    />
+                  </div>
+
+                  {/* Degree */}
+                  <div className="form-group">
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                      Degree <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <select
+                      className="modal-input"
+                      value={studentForm.degree}
+                      onChange={e => setSF('degree', e.target.value)}
+                      required
+                      style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                    >
+                      <option value="">-- Select Degree --</option>
+                      {degrees.map(d => (
+                        <option key={d.id} value={d.name}>{d.name}</option>
+                      ))}
+                    </select>
+                    {degrees.length === 0 && (
+                      <span style={{ display: 'block', marginTop: '0.25rem', fontSize: '0.75rem', color: '#ef4444' }}>
+                        ⚠️ No degrees available. Please add degrees first in the "Degree" menu.
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Graduation Year */}
+                  <div className="form-group">
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                      Graduation Year <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="number"
+                      className="modal-input"
+                      value={studentForm.graduation_year}
+                      onChange={e => setSF('graduation_year', parseInt(e.target.value))}
+                      placeholder="e.g. 2023"
+                      min="1950"
+                      max="2100"
+                      required
+                      style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                    />
+                  </div>
+
+                  {/* Specialization */}
+                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                      Specialization
+                    </label>
+                    <input
+                      type="text"
+                      className="modal-input"
+                      value={studentForm.specialization}
+                      onChange={e => setSF('specialization', e.target.value)}
+                      placeholder="e.g. Structural Engineering (Optional)"
+                      style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #f1f5f9', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    className="upload-result-clear"
+                    onClick={() => {
+                      setStudentForm({
+                        graduate_name: '',
+                        father_name: '',
+                        gender: 'Male',
+                        date_of_birth: '',
+                        nrc_number: '',
+                        student_id: '',
+                        degree: '',
+                        specialization: '',
+                        graduation_year: new Date().getFullYear(),
+                      });
+                    }}
+                  >
+                    Clear Form
+                  </button>
+                  <button
+                    type="submit"
+                    className="upload-browse-btn"
+                    disabled={submitting}
+                  >
+                    {submitting ? '⏳ Saving...' : '💾 Save Student'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
         </div>
       </main>
+
+      {/* ── Degree Modal ── */}
+      {degreeModal && (
+        <div className="modal-overlay" onClick={() => setDegreeModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ background: 'white', borderRadius: '12px', width: '90%', maxWidth: '500px', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div className="modal-header" style={{ padding: '1.5rem', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="modal-title" style={{ fontSize: '1.25rem', fontWeight: 700, color: '#1e293b' }}>
+                {editDegree ? '✏️ Edit Degree' : '＋ Add Degree'}
+              </span>
+              <button className="modal-close" onClick={() => setDegreeModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: '#64748b' }}>✕</button>
+            </div>
+            <div className="modal-form" style={{ padding: '1.5rem' }}>
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                  Degree Name <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  className="modal-input"
+                  value={degreeForm.name}
+                  onChange={e => setDF('name', e.target.value)}
+                  placeholder="e.g. BSc Mathematics, BSc IT, B.E(Civil)"
+                  required
+                  style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                  Degree Code <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  className="modal-input"
+                  value={degreeForm.code}
+                  onChange={e => setDF('code', e.target.value)}
+                  placeholder="e.g. BSC-MATH, BSC-IT, BE-CIVIL"
+                  required
+                  style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                  Level <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <select
+                  className="modal-input"
+                  value={degreeForm.level}
+                  onChange={e => setDF('level', e.target.value)}
+                  required
+                  style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                >
+                  <option value="bachelor">Bachelor</option>
+                  <option value="master">Master</option>
+                  <option value="doctorate">Doctorate</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                  Description
+                </label>
+                <input
+                  className="modal-input"
+                  value={degreeForm.description}
+                  onChange={e => setDF('description', e.target.value)}
+                  placeholder="Optional description"
+                  style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                />
+              </div>
+            </div>
+            <div className="modal-actions" style={{ padding: '1.5rem', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button className="btn-cancel" onClick={() => setDegreeModal(false)} style={{ padding: '0.625rem 1.25rem', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'white', color: '#64748b', fontWeight: 600, cursor: 'pointer' }}>
+                Cancel
+              </button>
+              <button className="btn-modal-submit" onClick={saveDegree} disabled={degreeSubmitting} style={{ padding: '0.625rem 1.25rem', borderRadius: '8px', border: 'none', background: '#10b981', color: 'white', fontWeight: 600, cursor: 'pointer' }}>
+                {degreeSubmitting ? '⏳ Saving...' : (editDegree ? '💾 Save Changes' : '＋ Create Degree')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

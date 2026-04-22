@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import { universityAPI, userAPI, verificationAPI } from '../../services/api';
 import '../../styles/admin/SuperAdminDashboard.css';
 
@@ -13,8 +12,16 @@ const initUni  = { name: '', location: '', description: '', logo_url: '', status
 const initUser = { name: '', email: '', password: '', role: 'university_admin', university_id: '' };
 
 const SuperAdminDashboard = () => {
-  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  
+  // Get user from localStorage
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  
+  const logout = () => {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
 
   const [tab, setTab] = useState<Tab>('dashboard');
 

@@ -1,165 +1,163 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../../services/api';
 import '../../styles/admin/LoginPage.css';
 
 const LoginPage = () => {
-  const [email,    setEmail]    = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPwd,  setShowPwd]  = useState(false);
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState('');
-  const { login } = useAuth();
+  const [showPwd, setShowPwd] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
     try {
-      await login(email, password);
-      // After login, isSuperAdmin is updated – but state hasn't re-rendered yet
-      // So read role from localStorage
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const response = await authAPI.login(email, password);
+      const { user, token } = response.data;
+
+      localStorage.setItem('auth_token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      // Redirect based on role
       if (user.role === 'super_admin') {
         navigate('/superadmin/admin');
       } else {
         navigate('/user/admin');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid email or password.');
+      setError(err.response?.data?.message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
   };
 
-  const fill = (e: string, p: string) => { setEmail(e); setPassword(p); };
-
   return (
     <div className="login-page">
-
-      {/* ── Left branding panel ── */}
+      {/* Left Panel */}
       <div className="login-left">
         <div className="login-brand">
           <div className="login-brand-icon">🎓</div>
-          <h1>Degree Verification Portal</h1>
-          <p>Secure, fast, and official academic credential verification for administrators.</p>
+          <h1>University Verification System</h1>
+          <p>Secure credential verification for educational institutions</p>
         </div>
 
         <div className="login-features">
           <div className="login-feature">
-            <span className="login-feature-icon">🔒</span>
-            <span>Role-based access control</span>
+            <span className="login-feature-icon">✓</span>
+            <span>Instant verification</span>
           </div>
           <div className="login-feature">
-            <span className="login-feature-icon">🏛️</span>
-            <span>Multi-university management</span>
+            <span className="login-feature-icon">🔒</span>
+            <span>Secure & encrypted</span>
           </div>
           <div className="login-feature">
             <span className="login-feature-icon">📊</span>
-            <span>Real-time analytics &amp; logs</span>
-          </div>
-          <div className="login-feature">
-            <span className="login-feature-icon">📁</span>
-            <span>Bulk CSV student upload</span>
+            <span>Real-time analytics</span>
           </div>
         </div>
       </div>
 
-      {/* ── Right form panel ── */}
+      {/* Right Panel */}
       <div className="login-right">
         <div className="login-form-wrap">
           <div className="login-form-header">
-            <h2>Welcome back</h2>
-            <p>Sign in to your admin account to continue</p>
+            <h2>Admin Login</h2>
+            <p>Enter your credentials to access the dashboard</p>
           </div>
 
           {error && (
             <div className="login-error">
-              <span>⚠️</span> {error}
+              <span>⚠️</span>
+              <span>{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit}>
-            {/* Email */}
             <div className="login-field">
-              <label htmlFor="login-email">Email Address</label>
+              <label>Email Address</label>
               <div className="login-input-wrap">
-                <span className="login-input-icon">✉️</span>
+                <span className="login-input-icon">📧</span>
                 <input
-                  id="login-email"
                   type="email"
                   className="login-input"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@example.com"
+                  placeholder="Enter your email"
                   required
-                  autoComplete="email"
                 />
               </div>
             </div>
 
-            {/* Password */}
             <div className="login-field">
-              <label htmlFor="login-password">Password</label>
+              <label>Password</label>
               <div className="login-input-wrap">
-                <span className="login-input-icon">🔑</span>
+                <span className="login-input-icon">🔒</span>
                 <input
-                  id="login-password"
                   type={showPwd ? 'text' : 'password'}
                   className="login-input"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   required
-                  autoComplete="current-password"
                 />
                 <button
                   type="button"
                   className="show-password-btn"
                   onClick={() => setShowPwd(!showPwd)}
-                  title={showPwd ? 'Hide password' : 'Show password'}
                 >
-                  {showPwd ? '🙈' : '👁️'}
+                  {showPwd ? '👁️' : '👁️‍🗨️'}
                 </button>
               </div>
             </div>
 
             <button type="submit" className="login-submit" disabled={loading}>
               {loading ? (
-                <><div className="login-spinner" /> Signing in...</>
+                <>
+                  <span className="login-spinner"></span>
+                  <span>Logging in...</span>
+                </>
               ) : (
-                '→ Sign In'
+                <>
+                  <span>Login</span>
+                  <span>→</span>
+                </>
               )}
             </button>
           </form>
 
-          {/* Demo credentials */}
           <div className="demo-box">
-            <h4>🧪 Demo Credentials</h4>
-            <div
-              className="demo-credential"
-              style={{ cursor: 'pointer' }}
-              onClick={() => fill('superadmin@system.com', 'password123')}
-              title="Click to autofill"
-            >
-              <strong>👑 Super Admin</strong>
+            <h4>🔑 Demo Credentials</h4>
+            <div className="demo-credential">
+              <strong>
+                <span>👑</span>
+                <span>Super Admin</span>
+              </strong>
               <code>superadmin@system.com</code>
             </div>
-            <div
-              className="demo-credential"
-              style={{ cursor: 'pointer' }}
-              onClick={() => fill('john@um1.edu', 'password123')}
-              title="Click to autofill"
-            >
-              <strong>🏛️ University Admin</strong>
+            <div className="demo-credential">
+              <strong>
+                <span>🎓</span>
+                <span>University Admin</span>
+              </strong>
               <code>john@um1.edu</code>
+            </div>
+            <div className="demo-credential">
+              <strong>
+                <span>🔑</span>
+                <span>Password</span>
+              </strong>
+              <code>password123</code>
             </div>
           </div>
 
-          <p className="login-back">
-            ← <Link to="/">Back to verification portal</Link>
-          </p>
+          <div className="login-back">
+            <a href="/">← Back to Home</a>
+          </div>
         </div>
       </div>
     </div>

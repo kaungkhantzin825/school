@@ -1,5 +1,10 @@
 /* LoginPage.css */
 
+:root {
+  --primary: #1a56db;
+  --transition: all 0.3s ease;
+}
+
 .login-page {
   min-height: 100vh;
   display: grid;
@@ -310,6 +315,34 @@
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── Responsive ── */
