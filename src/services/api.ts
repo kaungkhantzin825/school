@@ -131,6 +131,9 @@ export const degreeAPI = {
   
   getOne: (id: number) =>
     api.get(`/degrees/${id}`),
+
+  getByUniversity: (universityId: number) =>
+    api.get(`/universities/${universityId}/degrees`),
   
   create: (data: any) =>
     api.post('/degrees', data),
