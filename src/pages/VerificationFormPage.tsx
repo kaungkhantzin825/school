@@ -1,40 +1,60 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { verificationAPI } from '../services/api';
+import axios from 'axios';
 import '../styles/VerificationFormPage.css';
 
-const DEGREES = [
-  'MBBS (Bachelor of Medicine, Bachelor of Surgery)',
-  'M.Med.Sc (Master of Medical Science)',
-  'PhD (Doctor of Philosophy)',
-  'B.E (Bachelor of Engineering)',
-  'B.Sc (Bachelor of Science)',
-  'B.Com (Bachelor of Commerce)',
-  'B.A (Bachelor of Arts)',
-  'M.Sc (Master of Science)',
-  'M.B.A (Master of Business Administration)',
-];
+const API_BASE = import.meta.env.VITE_API_URL || 'https://backend.mmcertify.com/api';
+
+interface Degree {
+  id: number;
+  name: string;
+  code: string;
+  level: string;
+}
 
 const VerificationFormPage = () => {
   const location   = useLocation();
   const navigate   = useNavigate();
   const university = location.state?.university;
 
+  const [degrees, setDegrees]   = useState<Degree[]>([]);
+  const [degLoading, setDegLoading] = useState(true);
+
   const [formData, setFormData] = useState({
-    degree:          DEGREES[0],
-    graduateName:    '',
-    fatherName:      '',
-    graduationYear:  '',
-    verifierName:    '',
-    verifierEmail:   '',
+    degree:           '',
+    graduateName:     '',
+    fatherName:       '',
+    graduationYear:   '',
+    verifierName:     '',
+    verifierEmail:    '',
     organizationType: '',
     organizationName: '',
-    notes:           '',
+    notes:            '',
   });
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
 
   if (!university) { navigate('/'); return null; }
+
+  // ── Fetch degrees for this university from the backend ──
+  useEffect(() => {
+    const fetchDegrees = async () => {
+      setDegLoading(true);
+      try {
+        const res = await axios.get(`${API_BASE}/universities/${university.id}/degrees`);
+        const list: Degree[] = res.data;
+        setDegrees(list);
+        // Pre-select first degree
+        if (list.length > 0) setFormData(prev => ({ ...prev, degree: list[0].name }));
+      } catch {
+        setDegrees([]);
+      } finally {
+        setDegLoading(false);
+      }
+    };
+    fetchDegrees();
+  }, [university.id]);
 
   const set = (field: string, value: string) =>
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -42,8 +62,10 @@ const VerificationFormPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
 
+    if (!formData.degree) { setError('Please select a degree.'); return; }
+
+    setLoading(true);
     try {
       const response = await verificationAPI.verify({
         university_id:     university.id,
@@ -120,18 +142,38 @@ const VerificationFormPage = () => {
             </div>
           )}
 
-          {/* Graduate details */}
+          {/* Degree — dynamic from backend */}
           <div className="form-group">
             <label>Degree / Programme</label>
-            <select
-              className="form-control"
-              value={formData.degree}
-              onChange={(e) => set('degree', e.target.value)}
-            >
-              {DEGREES.map(d => <option key={d}>{d}</option>)}
-            </select>
+            {degLoading ? (
+              <div style={{ padding: '0.75rem', color: '#94a3b8', fontSize: '0.88rem' }}>
+                ⏳ Loading degrees for this university...
+              </div>
+            ) : degrees.length === 0 ? (
+              <div style={{
+                padding: '0.75rem 1rem', background: '#fef9c3', borderRadius: '8px',
+                color: '#854d0e', fontSize: '0.85rem', border: '1px solid #fde68a'
+              }}>
+                ⚠️ No degrees are configured for this university yet. Please contact the university admin.
+              </div>
+            ) : (
+              <select
+                className="form-control"
+                value={formData.degree}
+                onChange={(e) => set('degree', e.target.value)}
+                required
+              >
+                <option value="">-- Select Degree --</option>
+                {degrees.map(d => (
+                  <option key={d.id} value={d.name}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
 
+          {/* Graduate details */}
           <div className="form-row">
             <div className="form-group">
               <label>Graduate's Full Name</label>
@@ -243,7 +285,11 @@ const VerificationFormPage = () => {
             <button type="button" className="btn-back-sm" onClick={() => navigate(-1)}>
               ← Back
             </button>
-            <button type="submit" className="btn-submit" disabled={loading}>
+            <button
+              type="submit"
+              className="btn-submit"
+              disabled={loading || degLoading || degrees.length === 0}
+            >
               {loading ? (
                 <><div className="submit-spinner" /> Verifying...</>
               ) : (

@@ -72,8 +72,9 @@ const SearchPage = () => {
             <span className="gov-card-badge">PUBLIC SERVICE</span>
             <h2 className="gov-card-title">Verify Academic Qualifications</h2>
             <p className="gov-card-desc">
-              Enter the name of the university or college to begin the official verification process.
-              This service is free and available to all citizens and institutions.
+              Please enter the name of the university or college to begin the official verification process.
+              This system is intended for authorized verification purposes only and is not for use by
+              students or graduates to verify their own academic awards.
             </p>
           </div>
 
@@ -129,9 +130,9 @@ const SearchPage = () => {
           <div className="gov-notice">
             <span className="gov-notice-icon">ℹ️</span>
             <p>
-              This portal is maintained by the Ministry of Education. Verification results are based
-              on data provided by registered institutions. For disputes, contact your university
-              registrar directly.
+              Verification results are generated based on official data records submitted by accredited
+              and registered government universities and colleges in Myanmar. In case of any dispute or
+              clarification, please contact <a href="mailto:example@email.com" style={{ color: '#163172', fontWeight: 600 }}>example@email.com</a>.
             </p>
           </div>
         </div>
