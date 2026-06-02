@@ -42,7 +42,7 @@ const LoginPage = () => {
       <div className="login-left">
         <div className="login-brand">
           <div className="login-brand-icon">🎓</div>
-          <h1>University Verification System</h1>
+          <h1>Graduate Record Data Entry System</h1>
           <p>Secure credential verification for educational institutions</p>
         </div>
 
@@ -66,7 +66,7 @@ const LoginPage = () => {
       <div className="login-right">
         <div className="login-form-wrap">
           <div className="login-form-header">
-            <h2>Admin Login</h2>
+            <h2>Data Entry Portal Login</h2>
             <p>Enter your credentials to access the dashboard</p>
           </div>
 

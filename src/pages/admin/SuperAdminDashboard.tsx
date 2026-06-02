@@ -122,8 +122,8 @@ const SuperAdminDashboard = () => {
         <div className="sd-logo">
           <div className="sd-logo-icon">🎓</div>
           <div className="sd-logo-text">
-            <span className="sd-logo-title">DVP Admin</span>
-            <span className="sd-logo-sub">Super Admin</span>
+            <span className="sd-logo-title">Graduate Record</span>
+            <span className="sd-logo-sub">Data Entry System</span>
           </div>
         </div>
 
@@ -386,7 +386,7 @@ const SuperAdminDashboard = () => {
               <div className="settings-card">
                 <h3>⚙️ System Configuration</h3>
                 {[
-                  { label: 'System Name',          key: 'name',    val: 'University Verification System' },
+                  { label: 'System Name',          key: 'name',    val: 'Graduate Record Data Entry System' },
                   { label: 'Admin Email',           key: 'email',   val: 'admin@system.com' },
                   { label: 'Verification Timeout (min)', key: 'timeout', val: '30' },
                   { label: 'Max Search Results',   key: 'maxres',  val: '10' },

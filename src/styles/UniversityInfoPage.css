@@ -93,6 +93,29 @@
   padding-left: 1rem;
 }
 
+/* ── Verification Notice ── */
+.verification-notice {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-left: 4px solid #dc2626;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.75rem;
+  animation: slideInLeft 0.6s ease-out both;
+  animation-delay: 0.2s;
+}
+
+.verification-notice p {
+  font-size: 0.9rem;
+  color: #991b1b;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.verification-notice strong {
+  color: #7f1d1d;
+  font-weight: 700;
+}
+
 /* ── Info pills ── */
 .info-pills {
   display: flex;
@@ -153,4 +176,16 @@
   background: linear-gradient(135deg, #1241a8, #1d4ed8);
   box-shadow: 0 6px 20px rgba(26, 86, 219, 0.45);
   transform: translateY(-2px);
+}
+
+/* ── Animations ── */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }

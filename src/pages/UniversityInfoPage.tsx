@@ -1,12 +1,31 @@
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { universityAPI } from '../services/api';
 import '../styles/UniversityInfoPage.css';
 
 const UniversityInfoPage = () => {
   const location   = useLocation();
   const navigate   = useNavigate();
-  const university = location.state?.university;
+  const initialUniversity = location.state?.university;
 
-  if (!university) {
+  const [university, setUniversity] = useState<any>(initialUniversity);
+
+  useEffect(() => {
+    if (!initialUniversity?.id) return;
+
+    const fetchLatestData = async () => {
+      try {
+        const res = await universityAPI.getOne(initialUniversity.id);
+        setUniversity(res.data);
+      } catch (err) {
+        console.error('Failed to fetch latest university details', err);
+      }
+    };
+
+    fetchLatestData();
+  }, [initialUniversity?.id]);
+
+  if (!initialUniversity) {
     navigate('/');
     return null;
   }
@@ -38,6 +57,12 @@ const UniversityInfoPage = () => {
                maintains comprehensive alumni and graduation records available
                for official verification through this portal.`}
           </p>
+
+          {university.verification_notice && (
+            <div className="verification-notice">
+              <p>{university.verification_notice}</p>
+            </div>
+          )}
 
           <div className="info-pills">
             <span className="info-pill">✅ Officially Registered</span>

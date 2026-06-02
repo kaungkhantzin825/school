@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { studentAPI, verificationAPI, degreeAPI } from '../../services/api';
+import { studentAPI, verificationAPI, degreeAPI, universityAPI } from '../../services/api';
 import '../../styles/admin/UserAdminDashboard.css';
 
-type Tab = 'upload' | 'students' | 'logs' | 'degree' | 'addstudent';
+type Tab = 'upload' | 'students' | 'logs' | 'degree' | 'addstudent' | 'settings';
 
 interface Student {
   id: number;
@@ -72,6 +72,65 @@ const UserAdminDashboard = () => {
   const [editDegree, setEditDegree] = useState<any>(null);
   const [degreeForm, setDegreeForm] = useState({ name: '', description: '', code: '', level: 'bachelor', status: 'active' });
   const [degreeSubmitting, setDegreeSubmitting] = useState(false);
+
+  /* University Settings */
+  const [uniForm, setUniForm] = useState({
+    name: user?.university?.name || '',
+    description: user?.university?.description || '',
+    logo_url: user?.university?.logo_url || '',
+    verification_notice: user?.university?.verification_notice || '',
+  });
+  const [settingsSubmitting, setSettingsSubmitting] = useState(false);
+  const [settingsSuccess, setSettingsSuccess] = useState(false);
+
+  const fetchUniversity = async () => {
+    if (!user?.university_id) return;
+    setLoading(true);
+    try {
+      const res = await universityAPI.getOne(user.university_id);
+      const data = res.data;
+      setUniForm({
+        name: data.name || '',
+        description: data.description || '',
+        logo_url: data.logo_url || '',
+        verification_notice: data.verification_notice || '',
+      });
+      const updatedUser = { ...user, university: data };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+    } catch (e) {
+      console.error('Failed to fetch university details', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSettingsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.university_id) return;
+    setSettingsSubmitting(true);
+    setSettingsSuccess(false);
+    try {
+      const res = await universityAPI.update(user.university_id, {
+        description: uniForm.description,
+        logo_url: uniForm.logo_url,
+        verification_notice: uniForm.verification_notice,
+      });
+      setSettingsSuccess(true);
+      const updatedUser = { ...user, university: res.data };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUniForm({
+        name: res.data.name || '',
+        description: res.data.description || '',
+        logo_url: res.data.logo_url || '',
+        verification_notice: res.data.verification_notice || '',
+      });
+      setTimeout(() => setSettingsSuccess(false), 3000);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to update university settings');
+    } finally {
+      setSettingsSubmitting(false);
+    }
+  };
 
   const setDF = (k: string, v: string) => setDegreeForm(p => ({ ...p, [k]: v }));
 
@@ -154,6 +213,7 @@ const UserAdminDashboard = () => {
     if (tab === 'logs')       fetchLogs();
     if (tab === 'degree')     fetchDegrees();
     if (tab === 'addstudent') { fetchDegrees(); setSubmitSuccess(false); }
+    if (tab === 'settings')   fetchUniversity();
   }, [tab]);
 
   const fetchStudents = async () => {
@@ -282,7 +342,7 @@ const UserAdminDashboard = () => {
         <div className="ud-logo">
           <div className="ud-logo-icon">🏛️</div>
           <div className="ud-logo-uni">{user?.university?.name || 'University Portal'}</div>
-          <div className="ud-logo-sub">Admin Dashboard</div>
+          <div className="ud-logo-sub">Graduate Record Data Entry System</div>
         </div>
 
         <nav className="ud-nav">
@@ -292,6 +352,7 @@ const UserAdminDashboard = () => {
             ['logs',       '📋', 'Activity Logs'],
             ['degree',     '🎓', 'Degree'],
             ['addstudent', '➕', 'Add Student Manually'],
+            ['settings',   '⚙️', 'University Settings'],
           ] as [Tab, string, string][]).map(([id, icon, label]) => (
             <button
               key={id}
@@ -326,6 +387,7 @@ const UserAdminDashboard = () => {
             {tab === 'logs'       && '📋 Verifier Activity Logs'}
             {tab === 'degree'     && '🎓 Degree Management'}
             {tab === 'addstudent' && '➕ Add Student Manually'}
+            {tab === 'settings'   && '⚙️ University Settings'}
           </span>
           <div className="ud-topbar-right">
             <button className="ud-icon-btn" onClick={() => { if (tab === 'students') fetchStudents(); if (tab === 'logs') fetchLogs(); if (tab === 'degree') fetchDegrees(); }} title="Refresh">🔄</button>
@@ -931,6 +993,112 @@ const UserAdminDashboard = () => {
                     disabled={submitting}
                   >
                     {submitting ? '⏳ Saving...' : '💾 Save Student'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* ── SETTINGS TAB (University Settings) ── */}
+          {tab === 'settings' && (
+            <div className="section-card">
+              <div className="section-card-header">
+                <div>
+                  <div className="sc-title">⚙️ University Settings</div>
+                  <div className="sc-sub">Manage your university public profile and verification notices</div>
+                </div>
+              </div>
+
+              {settingsSuccess && (
+                <div className="upload-result" style={{ margin: '1.5rem' }}>
+                  <span className="upload-result-icon">✅</span>
+                  <div className="upload-result-info">
+                    <strong>Settings Saved Successfully!</strong>
+                    <span>Your university details and verification notice have been updated.</span>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleSettingsSubmit} style={{ padding: '1.5rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  
+                  {/* University Name (ReadOnly) */}
+                  <div className="form-group">
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                      University Name
+                    </label>
+                    <input
+                      type="text"
+                      className="modal-input"
+                      value={uniForm.name}
+                      readOnly
+                      disabled
+                      style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem', background: '#f8fafc', color: '#64748b', cursor: 'not-allowed' }}
+                    />
+                    <span style={{ display: 'block', marginTop: '0.25rem', fontSize: '0.75rem', color: '#64748b' }}>
+                      To rename the university, please contact the Super Admin.
+                    </span>
+                  </div>
+
+                  {/* Logo URL */}
+                  <div className="form-group">
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                      Logo Image URL
+                    </label>
+                    <input
+                      type="url"
+                      className="modal-input"
+                      value={uniForm.logo_url}
+                      onChange={e => setUniForm(p => ({ ...p, logo_url: e.target.value }))}
+                      placeholder="e.g. https://domain.com/logo.png"
+                      style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div className="form-group">
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                      University Description
+                    </label>
+                    <textarea
+                      className="modal-input"
+                      value={uniForm.description}
+                      onChange={e => setUniForm(p => ({ ...p, description: e.target.value }))}
+                      placeholder="Enter description..."
+                      rows={4}
+                      style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem', fontFamily: 'inherit', resize: 'vertical' }}
+                    />
+                  </div>
+
+                  {/* Verification Notice */}
+                  <div className="form-group">
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                      Verification Notice (Shown on Public Profile)
+                    </label>
+                    <textarea
+                      className="modal-input"
+                      value={uniForm.verification_notice}
+                      onChange={e => setUniForm(p => ({ ...p, verification_notice: e.target.value }))}
+                      placeholder="Specify who can get instant verification results and the processing time for manual requests..."
+                      rows={5}
+                      required
+                      style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem', fontFamily: 'inherit', resize: 'vertical' }}
+                    />
+                    <span style={{ display: 'block', marginTop: '0.25rem', fontSize: '0.75rem', color: '#64748b' }}>
+                      This notice will be rendered on the <strong>University Info</strong> page to guide verifiers.
+                    </span>
+                  </div>
+
+                </div>
+
+                <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid #f1f5f9', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                  <button
+                    type="submit"
+                    className="upload-browse-btn"
+                    disabled={settingsSubmitting}
+                    style={{ background: '#1d4ed8', color: 'white' }}
+                  >
+                    {settingsSubmitting ? '⏳ Saving...' : '💾 Save Settings'}
                   </button>
                 </div>
               </form>

@@ -8,6 +8,8 @@ interface University {
   name: string;
   location: string;
   logo_url?: string;
+  description?: string;
+  verification_notice?: string;
 }
 
 const SearchPage = () => {
@@ -49,7 +51,7 @@ const SearchPage = () => {
 
       {/* ── Top Official Bar ── */}
       <div className="gov-top-bar">
-        <span className="gov-top-bar-brand">Academic Credential Verification System</span>
+        <span className="gov-top-bar-brand">National Academic Verification System</span>
         <span className="gov-top-bar-right">Ministry of Education</span>
       </div>
 
@@ -58,7 +60,7 @@ const SearchPage = () => {
         <div className="gov-header-inner">
           <div className="gov-seal">🎓</div>
           <div className="gov-header-text">
-            <h1 className="gov-title">Degree Verification Portal</h1>
+            <h1 className="gov-title">National Academic Verification Portal</h1>
             <p className="gov-subtitle">Official academic credential verification · Ministry of Education</p>
           </div>
         </div>
