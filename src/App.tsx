@@ -7,8 +7,7 @@ import VerificationFormPage from './pages/VerificationFormPage';
 import VerificationResultPage from './pages/VerificationResultPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 
-// Dashboards are large and only ever seen by signed-in staff, so they are
-// split out of the main bundle that every public visitor downloads.
+
 const LoginPage           = lazy(() => import('./pages/admin/LoginPage'));
 const RegisterPage        = lazy(() => import('./pages/RegisterPage'));
 const UserAdminDashboard  = lazy(() => import('./pages/admin/UserAdminDashboard'));
