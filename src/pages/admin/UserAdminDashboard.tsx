@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { studentAPI, verificationAPI, degreeAPI, universityAPI } from '../../services/api';
 import '../../styles/admin/UserAdminDashboard.css';
 
-type Tab = 'upload' | 'students' | 'logs' | 'degree' | 'addstudent' | 'settings';
+type Tab = 'upload' | 'students' | 'pending_review' | 'logs' | 'degree' | 'addstudent' | 'settings';
 
 interface Student {
   id: number;
@@ -60,12 +60,28 @@ const UserAdminDashboard = () => {
 
   /* Students pagination + search */
   const [studentSearch, setStudentSearch] = useState('');
+  const [studentTotal,  setStudentTotal]  = useState(0);
+  const [loadError,     setLoadError]     = useState('');
   const [studentPage,   setStudentPage]   = useState(1);
 
   /* Logs filters */
   const [logFilter, setLogFilter] = useState('all');
   const [logSearch, setLogSearch] = useState('');
   const [logPage,   setLogPage]   = useState(1);
+
+  /* Pending Reviews (Registrar Queue) */
+  const [pendingLogs,      setPendingLogs]      = useState<any[]>([]);
+  const [pendingSearch,    setPendingSearch]    = useState('');
+  const [reviewModalLog,   setReviewModalLog]   = useState<any | null>(null);
+  const [reviewAction,     setReviewAction]     = useState<'approve' | 'reject'>('approve');
+  const [archiveRef,       setArchiveRef]       = useState('');
+  const [reviewNotes,      setReviewNotes]      = useState('');
+  const [regGender,        setRegGender]        = useState('');
+  const [regNrc,           setRegNrc]           = useState('');
+  const [regStudentId,     setRegStudentId]     = useState('');
+  const [regDob,           setRegDob]           = useState('');
+  const [resolving,        setResolving]        = useState(false);
+  const [resolveSuccess,   setResolveSuccess]   = useState<string | null>(null);
 
   /* Degree Management */
   const [degreeModal, setDegreeModal] = useState(false);
@@ -179,7 +195,41 @@ const UserAdminDashboard = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
+  /* Student photo upload */
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>('');
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
   const setSF = (k: string, v: string | number) => setStudentForm(p => ({ ...p, [k]: v }));
+
+  const handlePhotoPick = (file: File | undefined) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { alert('Please choose an image file.'); return; }
+    if (file.size > 4 * 1024 * 1024) { alert('Image must be 4 MB or smaller.'); return; }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const clearPhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview('');
+    if (photoInputRef.current) photoInputRef.current.value = '';
+  };
+
+  const resetStudentForm = () => {
+    setStudentForm({
+      graduate_name: '',
+      father_name: '',
+      gender: 'Male',
+      date_of_birth: '',
+      nrc_number: '',
+      student_id: '',
+      degree: '',
+      specialization: '',
+      graduation_year: new Date().getFullYear(),
+    });
+    clearPhoto();
+  };
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,19 +237,18 @@ const UserAdminDashboard = () => {
     setSubmitting(true);
     setSubmitSuccess(false);
     try {
-      await studentAPI.create({ ...studentForm, university_id: user.university_id });
-      setSubmitSuccess(true);
-      setStudentForm({
-        graduate_name: '',
-        father_name: '',
-        gender: 'Male',
-        date_of_birth: '',
-        nrc_number: '',
-        student_id: '',
-        degree: '',
-        specialization: '',
-        graduation_year: new Date().getFullYear(),
+      let photo_url: string | undefined;
+      if (photoFile) {
+        const up = await studentAPI.uploadPhoto(photoFile);
+        photo_url = up.data.url;
+      }
+      await studentAPI.create({
+        ...studentForm,
+        university_id: user.university_id,
+        ...(photo_url ? { photo_url } : {}),
       });
+      setSubmitSuccess(true);
+      resetStudentForm();
       setTimeout(() => setSubmitSuccess(false), 3000);
     } catch (e: any) {
       alert(e.response?.data?.message || 'Failed to add student');
@@ -209,33 +258,123 @@ const UserAdminDashboard = () => {
   };
 
   useEffect(() => {
-    if (tab === 'students')   fetchStudents();
-    if (tab === 'logs')       fetchLogs();
-    if (tab === 'degree')     fetchDegrees();
-    if (tab === 'addstudent') { fetchDegrees(); setSubmitSuccess(false); }
-    if (tab === 'settings')   fetchUniversity();
+    fetchPendingLogs();
+  }, []);
+
+  useEffect(() => {
+    if (tab === 'students')       fetchStudents();
+    if (tab === 'pending_review') fetchPendingLogs();
+    if (tab === 'logs')           fetchLogs();
+    if (tab === 'degree')         fetchDegrees();
+    if (tab === 'addstudent')     { fetchDegrees(); setSubmitSuccess(false); }
+    if (tab === 'settings')       fetchUniversity();
   }, [tab]);
 
+  // Debounced server-side student search.
+  useEffect(() => {
+    if (tab !== 'students') return;
+    const t = setTimeout(() => {
+      setStudentPage(1);
+      fetchStudents();
+    }, 350);
+    return () => clearTimeout(t);
+  }, [studentSearch]);
+
+  const fetchPendingLogs = async () => {
+    try {
+      const params: any = { status: 'pending' };
+      if (user?.university_id) params.university_id = user.university_id;
+      const res = await verificationAPI.getLogs(params);
+      setPendingLogs(res.data.data || res.data || []);
+    } catch {
+      setPendingLogs([]);
+    }
+  };
+
+  const openReviewModal = (log: any, action: 'approve' | 'reject') => {
+    setReviewModalLog(log);
+    setReviewAction(action);
+    setArchiveRef('');
+    setReviewNotes(
+      action === 'approve'
+        ? 'Confirmed and verified against university convocation register archives.'
+        : 'Record not found in university archives.'
+    );
+    // Left blank on purpose: the registrar must read these off the archive
+    // ledger. Pre-filling placeholders would write invented identity details
+    // into an official graduate record.
+    setRegGender(log.student?.gender || '');
+    setRegNrc(log.student?.nrc_number || '');
+    setRegStudentId(log.student?.student_id || '');
+    setRegDob(log.student?.date_of_birth ? String(log.student.date_of_birth).slice(0, 10) : '');
+  };
+
+  const handleResolveSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewModalLog) return;
+    setResolving(true);
+    try {
+      await verificationAPI.resolveLog(reviewModalLog.id, {
+        action: reviewAction,
+        archive_ref: archiveRef || undefined,
+        notes: reviewNotes || undefined,
+        student_id: regStudentId || undefined,
+        nrc_number: regNrc || undefined,
+        date_of_birth: regDob || undefined,
+        gender: regGender || undefined,
+      });
+
+      setResolveSuccess(
+        reviewAction === 'approve'
+          ? `✅ Successfully approved and verified record for "${reviewModalLog.searched_name}"! Verifier dashboard updated instantly.`
+          : `⚠️ Verification request for "${reviewModalLog.searched_name}" marked as rejected.`
+      );
+
+      setReviewModalLog(null);
+      fetchPendingLogs();
+      fetchLogs();
+      fetchStudents();
+      setTimeout(() => setResolveSuccess(null), 5000);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to process request.');
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  // Search runs on the server: the list is paginated, so filtering only the
+  // rows already loaded would silently miss most of the cohort.
   const fetchStudents = async () => {
     setLoading(true);
+    setLoadError('');
     try {
-      const params: any = {};
+      const params: any = { per_page: 100 };
       if (user?.university_id) params.university_id = user.university_id;
+      if (studentSearch.trim()) params.search = studentSearch.trim();
       const res = await studentAPI.getAll(params);
       setStudents(res.data.data || res.data);
-    } catch { setStudents(DEMO_STUDENTS); }
-    finally { setLoading(false); }
+      setStudentTotal(res.data.total ?? (res.data.data || res.data).length);
+    } catch {
+      // Never fall back to sample records here — showing invented graduates
+      // as if they were real university data is worse than showing nothing.
+      setStudents([]);
+      setStudentTotal(0);
+      setLoadError('Could not load student records. Please check your connection and try again.');
+    } finally { setLoading(false); }
   };
 
   const fetchLogs = async () => {
     setLoading(true);
+    setLoadError('');
     try {
       const params: any = {};
       if (user?.university_id) params.university_id = user.university_id;
       const res = await verificationAPI.getLogs(params);
       setLogs(res.data.data || res.data);
-    } catch { setLogs(DEMO_LOGS); }
-    finally { setLoading(false); }
+    } catch {
+      setLogs([]);
+      setLoadError('Could not load verification logs. Please try again.');
+    } finally { setLoading(false); }
   };
 
   const fetchDegrees = async () => {
@@ -314,10 +453,8 @@ const UserAdminDashboard = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  /* Derived data */
-  const filteredStudents = students.filter(s =>
-    `${s.graduate_name} ${s.nrc_number} ${s.degree}`.toLowerCase().includes(studentSearch.toLowerCase())
-  );
+  /* Derived data — the server already applied `search`, so no second filter. */
+  const filteredStudents = students;
   const stuPages        = Math.ceil(filteredStudents.length / PAGE_SIZE);
   const stuPaged        = filteredStudents.slice((studentPage - 1) * PAGE_SIZE, studentPage * PAGE_SIZE);
 
@@ -347,20 +484,22 @@ const UserAdminDashboard = () => {
 
         <nav className="ud-nav">
           {([
-            ['upload',     '📁', 'Data Upload'],
-            ['students',   '👨‍🎓', 'All Students'],
-            ['logs',       '📋', 'Activity Logs'],
-            ['degree',     '🎓', 'Degree'],
-            ['addstudent', '➕', 'Add Student Manually'],
-            ['settings',   '⚙️', 'University Settings'],
-          ] as [Tab, string, string][]).map(([id, icon, label]) => (
+            ['upload',         '📁', 'Data Upload',          0],
+            ['students',       '👨‍🎓', 'All Students',         0],
+            ['pending_review', '⏳', 'Pending Reviews',       pendingLogs.length],
+            ['logs',           '📋', 'Activity Logs',        0],
+            ['degree',         '🎓', 'Degree',               0],
+            ['addstudent',     '➕', 'Add Student Manually', 0],
+            ['settings',       '⚙️', 'University Settings',   0],
+          ] as [Tab, string, string, number][]).map(([id, icon, label, badgeCount]) => (
             <button
               key={id}
               className={`ud-nav-item ${tab === id ? 'active' : ''}`}
               onClick={() => setTab(id)}
             >
               <span>{icon}</span>
-              <span>{label}</span>
+              <span style={{ flex: 1 }}>{label}</span>
+              {badgeCount > 0 && <span className="ud-nav-badge">{badgeCount}</span>}
             </button>
           ))}
         </nav>
@@ -382,15 +521,16 @@ const UserAdminDashboard = () => {
         {/* Topbar */}
         <div className="ud-topbar">
           <span className="ud-topbar-title">
-            {tab === 'upload'     && '📁 Data Upload'}
-            {tab === 'students'   && '👨‍🎓 All Students'}
-            {tab === 'logs'       && '📋 Verifier Activity Logs'}
-            {tab === 'degree'     && '🎓 Degree Management'}
-            {tab === 'addstudent' && '➕ Add Student Manually'}
-            {tab === 'settings'   && '⚙️ University Settings'}
+            {tab === 'upload'         && '📁 Data Upload'}
+            {tab === 'students'       && '👨‍🎓 All Students'}
+            {tab === 'pending_review' && '⏳ Registrar Archival Review Queue'}
+            {tab === 'logs'           && '📋 Verifier Activity Logs'}
+            {tab === 'degree'         && '🎓 Degree Management'}
+            {tab === 'addstudent'     && '➕ Add Student Manually'}
+            {tab === 'settings'       && '⚙️ University Settings'}
           </span>
           <div className="ud-topbar-right">
-            <button className="ud-icon-btn" onClick={() => { if (tab === 'students') fetchStudents(); if (tab === 'logs') fetchLogs(); if (tab === 'degree') fetchDegrees(); }} title="Refresh">🔄</button>
+            <button className="ud-icon-btn" onClick={() => { if (tab === 'students') fetchStudents(); if (tab === 'pending_review') fetchPendingLogs(); if (tab === 'logs') fetchLogs(); if (tab === 'degree') fetchDegrees(); }} title="Refresh">🔄</button>
           </div>
         </div>
 
@@ -542,10 +682,19 @@ const UserAdminDashboard = () => {
           {/* ── STUDENTS TAB ── */}
           {tab === 'students' && (
             <div className="ud-table-card">
+              {loadError && (
+                <div style={{ margin: '1rem 1.5rem 0', padding: '0.75rem 1rem', background: '#fee2e2', color: '#b91c1c', borderRadius: 8, fontSize: '0.85rem' }}>
+                  ⚠️ {loadError}
+                </div>
+              )}
               <div className="ud-table-header">
                 <div>
                   <div className="ud-table-title">All Student Records</div>
-                  <div className="ud-table-meta">{filteredStudents.length} students total</div>
+                  <div className="ud-table-meta">
+                    {studentTotal.toLocaleString()} student{studentTotal === 1 ? '' : 's'}
+                    {studentTotal > students.length && ` · showing first ${students.length}`}
+                    {studentSearch.trim() && ' matching your search'}
+                  </div>
                 </div>
                 <div className="filter-bar">
                   <div className="filter-search">
@@ -626,6 +775,321 @@ const UserAdminDashboard = () => {
                       <button key={p} className={`page-btn ${p === studentPage ? 'active' : ''}`} onClick={() => setStudentPage(p)}>{p}</button>
                     ))}
                     <button className="page-btn" onClick={() => setStudentPage(p => Math.min(stuPages, p + 1))} disabled={studentPage === stuPages}>›</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── PENDING REVIEWS TAB (Registrar Archival Review Queue) ── */}
+          {tab === 'pending_review' && (
+            <div className="ud-pending-queue-wrap">
+              {/* Notification Banner */}
+              {resolveSuccess && (
+                <div className="ud-alert-success">
+                  {resolveSuccess}
+                </div>
+              )}
+
+              {/* Quick stats */}
+              <div className="ud-stats">
+                <div className="ud-stat">
+                  <div className="ud-stat-icon" style={{ background: '#fef3c7' }}>⏳</div>
+                  <div>
+                    <div className="ud-stat-val">{pendingLogs.length}</div>
+                    <div className="ud-stat-lbl">Pending Review Requests</div>
+                  </div>
+                </div>
+
+                <div className="ud-stat">
+                  <div className="ud-stat-icon" style={{ background: '#fee2e2' }}>🚨</div>
+                  <div>
+                    <div className="ud-stat-val">
+                      {pendingLogs.filter(l => {
+                        if (!l.sla_due_at) return false;
+                        const diff = (new Date(l.sla_due_at).getTime() - Date.now()) / 86400000;
+                        return diff <= 1.5;
+                      }).length}
+                    </div>
+                    <div className="ud-stat-lbl">Urgent / SLA Expiring</div>
+                  </div>
+                </div>
+
+                <div className="ud-stat">
+                  <div className="ud-stat-icon" style={{ background: '#d1fae5' }}>⚡</div>
+                  <div>
+                    <div className="ud-stat-val">Instant Sync</div>
+                    <div className="ud-stat-lbl">Auto-updates Verifier Portal</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Table Card */}
+              <div className="ud-table-card">
+                <div className="ud-table-header">
+                  <div>
+                    <div className="ud-table-title">Registrar Archival Review Queue</div>
+                    <div className="ud-table-meta">
+                      Older/archived academic searches requiring manual registrar archive book verification
+                    </div>
+                  </div>
+                  <div className="filter-bar">
+                    <div className="filter-search">
+                      <span>🔍</span>
+                      <input
+                        placeholder="Search candidate name or Request ID..."
+                        value={pendingSearch}
+                        onChange={e => setPendingSearch(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="ud-table">
+                    <thead>
+                      <tr>
+                        <th>No.</th>
+                        <th>Request Ref</th>
+                        <th>Candidate Name</th>
+                        <th>Father's Name</th>
+                        <th>Degree / Course</th>
+                        <th>Graduation Year</th>
+                        <th>Requested By</th>
+                        <th>Date Submitted</th>
+                        <th>SLA Due</th>
+                        <th style={{ textAlign: 'center' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingLogs
+                        .filter(l => {
+                          const q = pendingSearch.toLowerCase();
+                          return (
+                            !pendingSearch ||
+                            (l.searched_name || '').toLowerCase().includes(q) ||
+                            (l.request_ref || '').toLowerCase().includes(q) ||
+                            (l.searched_degree || '').toLowerCase().includes(q) ||
+                            (l.organization_name || '').toLowerCase().includes(q)
+                          );
+                        })
+                        .map((l, i) => {
+                          const reqId = l.request_ref || `#VR-${l.id}`;
+                          return (
+                            <tr key={l.id}>
+                              <td>{i + 1}</td>
+                              <td className="td-mono" style={{ fontWeight: 700, color: '#1e293b' }}>
+                                {reqId}
+                              </td>
+                              <td className="td-name">
+                                {l.searched_name}
+                              </td>
+                              <td>{l.searched_father_name || '—'}</td>
+                              <td>{l.searched_degree}</td>
+                              <td>
+                                <span className="ud-pill-blue">
+                                  {l.searched_year}
+                                </span>
+                              </td>
+                              <td>
+                                <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{l.organization_name || l.verifier_name}</div>
+                                <div style={{ fontSize: '0.74rem', color: '#64748b' }}>{l.verifier_email || l.organization_type}</div>
+                              </td>
+                              <td>{new Date(l.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                              <td>
+                                {l.sla_due_at ? (
+                                  <span style={{ color: '#c53030', fontWeight: 600, fontSize: '0.82rem' }}>
+                                    ⏱ {new Date(l.sla_due_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                                  </span>
+                                ) : (
+                                  <span style={{ color: '#2e7d32', fontWeight: 600, fontSize: '0.82rem' }}>Normal</span>
+                                )}
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
+                                  <button
+                                    className="ud-btn-approve"
+                                    onClick={() => openReviewModal(l, 'approve')}
+                                    title="Confirm record in university archives and verify"
+                                  >
+                                    ✓ Confirm &amp; Approve
+                                  </button>
+                                  <button
+                                    className="ud-btn-reject"
+                                    onClick={() => openReviewModal(l, 'reject')}
+                                    title="Record not found or invalid"
+                                  >
+                                    ✕ Reject
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      {pendingLogs.length === 0 && (
+                        <tr>
+                          <td colSpan={10}>
+                            <div className="empty-state" style={{ padding: '3.5rem 1rem', textAlign: 'center', color: '#64748b' }}>
+                              <span style={{ fontSize: '3rem' }}>🎉</span>
+                              <h3 style={{ margin: '0.5rem 0', color: '#1e293b' }}>Queue is completely clear!</h3>
+                              <p>No manual archival verification requests pending for your university at this time.</p>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Review Modal */}
+              {reviewModalLog && (
+                <div className="ud-modal-backdrop" onClick={() => setReviewModalLog(null)}>
+                  <div className="ud-modal-card" onClick={e => e.stopPropagation()}>
+                    <div className="ud-modal-header">
+                      <h3>
+                        {reviewAction === 'approve'
+                          ? '✓ Confirm & Approve Degree Record'
+                          : '✕ Reject Verification Request'}
+                      </h3>
+                      <button className="ud-modal-close" onClick={() => setReviewModalLog(null)}>✕</button>
+                    </div>
+
+                    <form onSubmit={handleResolveSubmit} className="ud-modal-body">
+                      {/* Candidate info summary */}
+                      <div className="ud-candidate-box">
+                        <div className="ud-candidate-row">
+                          <span className="ud-lbl">Request ID:</span>
+                          <span className="ud-val" style={{ fontWeight: 700 }}>{reviewModalLog.request_ref || `#VR-${reviewModalLog.id}`}</span>
+                        </div>
+                        <div className="ud-candidate-row">
+                          <span className="ud-lbl">Candidate:</span>
+                          <span className="ud-val" style={{ fontWeight: 700, color: '#1e40af' }}>{reviewModalLog.searched_name}</span>
+                        </div>
+                        <div className="ud-candidate-row">
+                          <span className="ud-lbl">Father's Name:</span>
+                          <span className="ud-val">{reviewModalLog.searched_father_name || '—'}</span>
+                        </div>
+                        <div className="ud-candidate-row">
+                          <span className="ud-lbl">Degree / Year:</span>
+                          <span className="ud-val">{reviewModalLog.searched_degree} ({reviewModalLog.searched_year})</span>
+                        </div>
+                        <div className="ud-candidate-row">
+                          <span className="ud-lbl">Verifier:</span>
+                          <span className="ud-val">{reviewModalLog.organization_name} ({reviewModalLog.verifier_email})</span>
+                        </div>
+                      </div>
+
+                      {reviewAction === 'approve' ? (
+                        <>
+                          <div className="ud-form-group">
+                            <label>University Archive Ledger Reference (Book / Volume / Roll No.)</label>
+                            <input
+                              type="text"
+                              value={archiveRef}
+                              onChange={e => setArchiveRef(e.target.value)}
+                              placeholder="e.g. Convocation Register Vol 8, Page 142, Roll 034"
+                              required
+                            />
+                            <span className="ud-form-hint">Provides official provenance for audit trails.</span>
+                          </div>
+
+                          <div className="ud-form-hint" style={{ marginBottom: '0.75rem' }}>
+                            ⚠️ Enter the graduate's real details exactly as they appear in the archive
+                            ledger — these are stored as the official verified record.
+                          </div>
+
+                          <div className="ud-form-row">
+                            <div className="ud-form-group">
+                              <label>Graduate Reg No. / Student ID</label>
+                              <input
+                                type="text"
+                                value={regStudentId}
+                                onChange={e => setRegStudentId(e.target.value)}
+                                placeholder="e.g. TU-2015-034"
+                              />
+                            </div>
+                            <div className="ud-form-group">
+                              <label>NRC Number *</label>
+                              <input
+                                type="text"
+                                value={regNrc}
+                                onChange={e => setRegNrc(e.target.value)}
+                                placeholder="e.g. 5/Kapana(N)12345"
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          <div className="ud-form-row">
+                            <div className="ud-form-group">
+                              <label>Gender *</label>
+                              <select value={regGender} onChange={e => setRegGender(e.target.value)} required>
+                                <option value="">-- Select --</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                              </select>
+                            </div>
+                            <div className="ud-form-group">
+                              <label>Date of Birth *</label>
+                              <input
+                                type="date"
+                                value={regDob}
+                                onChange={e => setRegDob(e.target.value)}
+                                max={new Date().toISOString().slice(0, 10)}
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          <div className="ud-form-group">
+                            <label>Registrar Verification Notes</label>
+                            <textarea
+                              rows={2}
+                              value={reviewNotes}
+                              onChange={e => setReviewNotes(e.target.value)}
+                              placeholder="Confirmed record in physical archives."
+                            />
+                          </div>
+
+                          <div className="ud-form-alert">
+                            ℹ️ Upon approval, this request will be immediately marked as <strong>Verified</strong> in the Verifier's Dashboard, and added to the official student database.
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="ud-form-group">
+                            <label>Rejection Reason / Notes</label>
+                            <textarea
+                              rows={3}
+                              value={reviewNotes}
+                              onChange={e => setReviewNotes(e.target.value)}
+                              placeholder="State the archival check outcome (e.g. Record not found in university registers for given academic session)."
+                              required
+                            />
+                          </div>
+                        </>
+                      )}
+
+                      <div className="ud-modal-actions">
+                        <button
+                          type="button"
+                          className="ud-btn-secondary"
+                          onClick={() => setReviewModalLog(null)}
+                          disabled={resolving}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className={reviewAction === 'approve' ? 'ud-btn-approve-submit' : 'ud-btn-reject-submit'}
+                          disabled={resolving}
+                        >
+                          {resolving ? 'Processing...' : reviewAction === 'approve' ? 'Confirm & Approve' : 'Confirm Rejection'}
+                        </button>
+                      </div>
+                    </form>
                   </div>
                 </div>
               )}
@@ -812,8 +1276,58 @@ const UserAdminDashboard = () => {
               )}
 
               <form onSubmit={handleManualSubmit} style={{ padding: '1.5rem' }}>
+                {/* Student Photo */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                  <div
+                    onClick={() => photoInputRef.current?.click()}
+                    style={{
+                      width: 96, height: 96, flexShrink: 0, borderRadius: '10px',
+                      border: '2px dashed #cbd5e1', display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', cursor: 'pointer', overflow: 'hidden',
+                      background: '#f8fafc', color: '#94a3b8', fontSize: '1.5rem',
+                    }}
+                  >
+                    {photoPreview
+                      ? <img src={photoPreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : '📷'}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>Upload Student Photo</div>
+                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', marginBottom: '0.5rem' }}>
+                      JPG, PNG or WEBP · max 4 MB · optional
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        type="button"
+                        className="upload-browse-btn"
+                        onClick={() => photoInputRef.current?.click()}
+                        style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}
+                      >
+                        📁 Choose Photo
+                      </button>
+                      {photoPreview && (
+                        <button
+                          type="button"
+                          className="upload-result-clear"
+                          onClick={clearPhoto}
+                          style={{ padding: '0.4rem 0.9rem', fontSize: '0.8rem' }}
+                        >
+                          ✕ Remove
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={e => handlePhotoPick(e.target.files?.[0])}
+                      style={{ display: 'none' }}
+                    />
+                  </div>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
-                  
+
                   {/* Graduate Name */}
                   <div className="form-group">
                     <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
@@ -894,17 +1408,17 @@ const UserAdminDashboard = () => {
                     />
                   </div>
 
-                  {/* Student ID */}
+                  {/* Graduate Registration Number */}
                   <div className="form-group">
                     <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
-                      Student ID
+                      Graduate Registration Number
                     </label>
                     <input
                       type="text"
                       className="modal-input"
                       value={studentForm.student_id}
                       onChange={e => setSF('student_id', e.target.value)}
-                      placeholder="e.g. CS-2019-001"
+                      placeholder="e.g. GRN-2019-001"
                       style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
                     />
                   </div>
@@ -971,19 +1485,7 @@ const UserAdminDashboard = () => {
                   <button
                     type="button"
                     className="upload-result-clear"
-                    onClick={() => {
-                      setStudentForm({
-                        graduate_name: '',
-                        father_name: '',
-                        gender: 'Male',
-                        date_of_birth: '',
-                        nrc_number: '',
-                        student_id: '',
-                        degree: '',
-                        specialization: '',
-                        graduation_year: new Date().getFullYear(),
-                      });
-                    }}
+                    onClick={resetStudentForm}
                   >
                     Clear Form
                   </button>
@@ -1187,39 +1689,5 @@ const UserAdminDashboard = () => {
     </div>
   );
 };
-
-/* ── Rich demo data (used as fallback when API is offline) ── */
-const DEMO_STUDENTS: Student[] = [
-  { id:1,  graduate_name:'Maung Maung Aye',     father_name:'U Aye Lwin',      gender:'Male',   date_of_birth:'2000-03-15', nrc_number:'12/OUKAMA(N)123456', student_id:'CS-2019-001', degree:'B.E(Civil)',              specialization:'Structural Engineering', graduation_year:2023 },
-  { id:2,  graduate_name:'Su Su Htwe',           father_name:'U Htwe Naing',    gender:'Female', date_of_birth:'2001-07-22', nrc_number:'9/MAYAKA(N)234567',  student_id:'CS-2020-012', degree:'B.E(Mechanical)',         specialization:'Thermal Engineering',    graduation_year:2024 },
-  { id:3,  graduate_name:'Ko Ko Naing',          father_name:'U Naing Lin',     gender:'Male',   date_of_birth:'1999-11-05', nrc_number:'5/KAPANA(N)345678',  student_id:'CS-2018-034', degree:'B.E(Electrical)',         specialization:'Power Systems',          graduation_year:2022 },
-  { id:4,  graduate_name:'Ei Ei Mon',            father_name:'U Mon Win',       gender:'Female', date_of_birth:'2002-01-18', nrc_number:'14/DAKANA(N)456789', student_id:'CS-2021-008', degree:'B.E(Computer)',           specialization:'Artificial Intelligence',graduation_year:2025 },
-  { id:5,  graduate_name:'Zaw Lin Htet',         father_name:'U Htet Aung',     gender:'Male',   date_of_birth:'2000-09-30', nrc_number:'8/PHENMA(N)567890',  student_id:'CS-2019-055', degree:'B.Sc(Physics)',           specialization:'',                       graduation_year:2023 },
-  { id:6,  graduate_name:'Hnin Wai Hnin',        father_name:'U Wai Phyo',      gender:'Female', date_of_birth:'2001-04-12', nrc_number:'1/BAGANA(N)678901',  student_id:'CS-2020-023', degree:'B.Sc(Chemistry)',         specialization:'Organic Chemistry',      graduation_year:2024 },
-  { id:7,  graduate_name:'Aung Kyaw Zin',        father_name:'U Kyaw Tint',     gender:'Male',   date_of_birth:'1998-12-25', nrc_number:'3/DAWNA(N)789012',   student_id:'CS-2017-067', degree:'M.Sc(Engineering)',       specialization:'',                       graduation_year:2022 },
-  { id:8,  graduate_name:'Khin Myo Thant',       father_name:'U Myo Win',       gender:'Female', date_of_birth:'2000-06-08', nrc_number:'7/TATANA(N)890123',  student_id:'CS-2019-089', degree:'B.E(Petroleum)',          specialization:'Reservoir Engineering',  graduation_year:2023 },
-  { id:9,  graduate_name:'Pyae Sone Kyaw',       father_name:'U Kyaw Zin',      gender:'Male',   date_of_birth:'2001-02-14', nrc_number:'11/PAKANA(N)901234', student_id:'CS-2020-034', degree:'B.E(Mining)',             specialization:'',                       graduation_year:2024 },
-  { id:10, graduate_name:'Thida Aye',            father_name:'U Aye Myint',     gender:'Female', date_of_birth:'2002-08-19', nrc_number:'2/LAGANA(N)012345',  student_id:'CS-2021-017', degree:'B.Sc(Mathematics)',       specialization:'Applied Mathematics',    graduation_year:2025 },
-  { id:11, graduate_name:'Min Htet Aung',        father_name:'U Aung Than',     gender:'Male',   date_of_birth:'1999-05-27', nrc_number:'6/MAHANA(N)123456',  student_id:'CS-2018-078', degree:'B.E(Architecture)',       specialization:'Urban Planning',         graduation_year:2022 },
-  { id:12, graduate_name:'Nwe Nwe Oo',           father_name:'U Oo Khin',       gender:'Female', date_of_birth:'2000-10-03', nrc_number:'13/MASANA(N)234567', student_id:'CS-2019-102', degree:'B.Com',                   specialization:'Accounting',             graduation_year:2023 },
-  { id:13, graduate_name:'Kaung Htet Kyaw',      father_name:'U Kyaw Linn',     gender:'Male',   date_of_birth:'2001-12-11', nrc_number:'4/WUNNA(N)345678',   student_id:'CS-2020-067', degree:'B.A(Economics)',          specialization:'Microeconomics',         graduation_year:2024 },
-  { id:14, graduate_name:'Aye Chan Myat',        father_name:'U Myat Kyaw',     gender:'Female', date_of_birth:'2000-07-29', nrc_number:'10/DALANA(N)456789', student_id:'CS-2019-089', degree:'B.E(Civil)',              specialization:'Water Resources',        graduation_year:2023 },
-  { id:15, graduate_name:'Wai Yan Phyo',         father_name:'U Phyo Zaw',      gender:'Male',   date_of_birth:'1998-03-16', nrc_number:'15/YAMANA(N)567890', student_id:'CS-2017-111', degree:'B.E(Mechanical)',         specialization:'Automotive Engineering', graduation_year:2022 },
-];
-
-const DEMO_LOGS: Log[] = [
-  { id:1,  created_at:'2026-04-13T09:23:00Z', verifier_name:'John Smith',   organization_type:'Employer',          organization_name:'ABC Company Ltd',    searched_name:'Maung Maung Aye',   searched_degree:'B.E(Civil)',     result:'verified',  status:'success' },
-  { id:2,  created_at:'2026-04-13T08:15:00Z', verifier_name:'Mary Johnson', organization_type:'Recruitment Agency',organization_name:'TopTalent Myanmar',  searched_name:'Ko Ko Naing',       searched_degree:'B.E(Electrical)',result:'not_found', status:'failed'  },
-  { id:3,  created_at:'2026-04-12T14:45:00Z', verifier_name:'David Lee',    organization_type:'Embassy',           organization_name:'Australian Embassy',  searched_name:'Su Su Htwe',        searched_degree:'B.E(Mechanical)',result:'verified',  status:'success' },
-  { id:4,  created_at:'2026-04-12T11:30:00Z', verifier_name:'Sarah Wilson', organization_type:'University',        organization_name:'University of Yangon', searched_name:'Ei Ei Mon',         searched_degree:'B.E(Computer)',  result:'verified',  status:'success' },
-  { id:5,  created_at:'2026-04-11T16:20:00Z', verifier_name:'William Tan',  organization_type:'Government',        organization_name:'Ministry of Health',  searched_name:'Hnin Wai Hnin',     searched_degree:'B.Sc(Chemistry)',result:'verified',  status:'success' },
-  { id:6,  created_at:'2026-04-11T10:05:00Z', verifier_name:'Alice Chen',   organization_type:'Employer',          organization_name:'XYZ Corporation',     searched_name:'Nonexistent Person',searched_degree:'B.E(Civil)',     result:'not_found', status:'failed'  },
-  { id:7,  created_at:'2026-04-10T15:30:00Z', verifier_name:'Bob Kyaw',     organization_type:'Employer',          organization_name:'MML Company',         searched_name:'Khin Myo Thant',    searched_degree:'B.E(Petroleum)', result:'verified',  status:'success' },
-  { id:8,  created_at:'2026-04-10T09:00:00Z', verifier_name:'Zin Mar Oo',   organization_type:'Bank',              organization_name:'KBZ Bank',            searched_name:'Aung Kyaw Zin',     searched_degree:'M.Sc(Engineering)',result:'verified', status:'success' },
-  { id:9,  created_at:'2026-04-09T13:45:00Z', verifier_name:'James Wong',   organization_type:'Recruitment Agency',organization_name:'HR Solutions',        searched_name:'Wrong Name',        searched_degree:'B.E(Mining)',    result:'not_found', status:'failed'  },
-  { id:10, created_at:'2026-04-09T08:20:00Z', verifier_name:'Emily Hla',    organization_type:'Embassy',           organization_name:'Japanese Embassy',    searched_name:'Thida Aye',         searched_degree:'B.Sc(Mathematics)',result:'verified',status:'success' },
-  { id:11, created_at:'2026-04-08T16:10:00Z', verifier_name:'Peter Zaw',    organization_type:'Employer',          organization_name:'Yoma Bank',           searched_name:'Min Htet Aung',     searched_degree:'B.E(Architecture)',result:'verified',status:'success' },
-  { id:12, created_at:'2026-04-08T11:55:00Z', verifier_name:'Linda Myint',  organization_type:'University',        organization_name:'Mandalay University', searched_name:'Pyae Sone Kyaw',    searched_degree:'B.E(Mining)',    result:'verified',  status:'success' },
-];
 
 export default UserAdminDashboard;

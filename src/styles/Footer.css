@@ -1,0 +1,138 @@
+/* Footer.css — MAVER Footer */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+.maver-footer {
+  background: #4a4440;
+  color: #d1c9c5;
+  font-family: 'Inter', 'Noto Sans', sans-serif;
+  margin-top: auto;
+}
+
+/* ── Main Footer Body ── */
+.maver-footer-body {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2.25rem 2.5rem 1.75rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+/* ── Footer Columns ── */
+.maver-footer-col {
+  min-width: 120px;
+}
+
+.maver-footer-col-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 0.75rem 0;
+  letter-spacing: 0.01em;
+}
+
+.maver-footer-col ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.maver-footer-col ul li a {
+  text-decoration: none;
+  color: #b8b0ab;
+  font-size: 0.82rem;
+  font-weight: 400;
+  transition: color 0.15s;
+  line-height: 1.5;
+}
+
+.maver-footer-col ul li a:hover {
+  color: #ffffff;
+}
+
+/* ── Footer Right (Copyright + Social) ── */
+.maver-footer-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.maver-footer-copyright {
+  font-size: 0.78rem;
+  color: #9e9691;
+  white-space: nowrap;
+}
+
+/* ── Social Icons ── */
+.maver-social-icons {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.maver-social-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #ffffff;
+  font-size: 1rem;
+  transition: transform 0.2s, opacity 0.2s;
+  flex-shrink: 0;
+}
+
+.maver-social-btn:hover {
+  transform: translateY(-2px);
+  opacity: 0.85;
+}
+
+.maver-social-btn.facebook  { background: #1877f2; }
+.maver-social-btn.linkedin  { background: #0a66c2; }
+.maver-social-btn.youtube   { background: #ff0000; }
+
+/* ── Bottom Divider Bar ── */
+.maver-footer-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.65rem 2.5rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.maver-footer-bottom-text {
+  font-size: 0.73rem;
+  color: #7a736e;
+  text-align: center;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .maver-footer-body {
+    padding: 1.75rem 1.25rem 1.25rem;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .maver-footer-right {
+    align-items: flex-start;
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .maver-footer-bottom {
+    padding: 0.65rem 1.25rem;
+  }
+}

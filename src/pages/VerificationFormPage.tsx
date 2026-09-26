@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { verificationAPI, degreeAPI } from '../services/api';
 import '../styles/VerificationFormPage.css';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 interface Degree {
   id: number;
@@ -32,9 +34,16 @@ const VerificationFormPage = () => {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
 
-  if (!university) { navigate('/'); return null; }
+  // Redirecting has to happen in an effect, not during render: calling
+  // navigate() while rendering warns, and an early return here would skip the
+  // hooks below and break the rules of hooks on the next render.
+  useEffect(() => {
+    if (!university) navigate('/', { replace: true });
+  }, [university, navigate]);
 
   useEffect(() => {
+    if (!university) return;
+
     const fetchDegrees = async () => {
       setDegLoading(true);
       try {
@@ -51,7 +60,9 @@ const VerificationFormPage = () => {
       }
     };
     fetchDegrees();
-  }, [university.id]);
+  }, [university]);
+
+  if (!university) return null;
 
   const set = (field: string, value: string) =>
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -79,9 +90,12 @@ const VerificationFormPage = () => {
         state: {
           university,
           formData,
-          isValid: response.data.verified,
-          student: response.data.student,
-          logId:   response.data.log_id,
+          isValid:    response.data.verified,
+          isPending:  response.data.status === 'pending',
+          student:    response.data.student,
+          logId:      response.data.log_id,
+          requestRef: response.data.request_ref,
+          slaDueAt:   response.data.sla_due_at,
         },
       });
     } catch (err: any) {
@@ -95,198 +109,208 @@ const VerificationFormPage = () => {
   };
 
   return (
-    <div className="verification-form-page">
-      <div className="form-card">
+    <div className="verification-form-page" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
 
-        {/* Banner */}
-        <div className="form-card-banner">
-          <div className="form-shield">🏛️</div>
-          <div className="form-banner-text">
-            <h2>{university.name}</h2>
-            <p>📍 {university.location}</p>
-          </div>
-        </div>
+      {/* ── MAVER Header ── */}
+      <Header />
 
-        {/* Progress */}
-        <div className="form-steps">
-          <div className="step">
-            <span className="step-num done">✓</span>
-            <span className="step-label done">Select</span>
-          </div>
-          <div className="step-connector done" />
-          <div className="step">
-            <span className="step-num active">2</span>
-            <span className="step-label active">Fill Form</span>
-          </div>
-          <div className="step-connector" />
-          <div className="step">
-            <span className="step-num">3</span>
-            <span className="step-label">Result</span>
-          </div>
-        </div>
+      {/* ── Content ── */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2.5rem 1.5rem' }}>
+        <div className="form-card">
 
-        {/* Form */}
-        <form className="form-body" onSubmit={handleSubmit}>
-
-          {error && (
-            <div style={{
-              background: '#fee2e2', color: '#dc2626', borderRadius: '10px',
-              padding: '0.75rem 1rem', fontSize: '0.88rem', marginBottom: '1.25rem'
-            }}>
-              ⚠️ {error}
+          {/* Banner */}
+          <div className="form-card-banner">
+            <div className="form-shield">🏛️</div>
+            <div className="form-banner-text">
+              <h2>{university.name}</h2>
+              <p>📍 {university.location}</p>
             </div>
-          )}
+          </div>
 
-          {/* Degree — loaded from university admin settings */}
-          <div className="form-group">
-            <label>Degree / Programme</label>
-            {degLoading ? (
-              <select className="form-control" disabled>
-                <option>Loading degrees...</option>
-              </select>
-            ) : degrees.length === 0 ? (
-              <select className="form-control" disabled>
-                <option>No degrees configured for this university</option>
-              </select>
-            ) : (
-              <select
-                className="form-control"
-                value={formData.degree}
-                onChange={(e) => set('degree', e.target.value)}
-                required
-              >
-                {degrees.map(d => (
-                  <option key={d.id} value={d.name}>{d.name}</option>
-                ))}
-              </select>
+          {/* Progress */}
+          <div className="form-steps">
+            <div className="step">
+              <span className="step-num done">✓</span>
+              <span className="step-label done">Select</span>
+            </div>
+            <div className="step-connector done" />
+            <div className="step">
+              <span className="step-num active">2</span>
+              <span className="step-label active">Fill Form</span>
+            </div>
+            <div className="step-connector" />
+            <div className="step">
+              <span className="step-num">3</span>
+              <span className="step-label">Result</span>
+            </div>
+          </div>
+
+          {/* Form */}
+          <form className="form-body" onSubmit={handleSubmit}>
+
+            {error && (
+              <div style={{
+                background: '#fee2e2', color: '#dc2626', borderRadius: '10px',
+                padding: '0.75rem 1rem', fontSize: '0.88rem', marginBottom: '1.25rem'
+              }}>
+                ⚠️ {error}
+              </div>
             )}
-          </div>
 
-          <div className="form-row">
+            {/* Degree */}
             <div className="form-group">
-              <label>Graduate's Full Name</label>
-              <input
-                type="text"
-                className="form-control"
-                value={formData.graduateName}
-                onChange={(e) => set('graduateName', e.target.value)}
-                placeholder="e.g. Maung Maung"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Father's Name <span className="optional">(on certificate)</span></label>
-              <input
-                type="text"
-                className="form-control"
-                value={formData.fatherName}
-                onChange={(e) => set('fatherName', e.target.value)}
-                placeholder="e.g. U Kyaw Zin"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Year of Graduation</label>
-            <input
-              type="number"
-              className="form-control"
-              value={formData.graduationYear}
-              onChange={(e) => set('graduationYear', e.target.value)}
-              placeholder="e.g. 2023"
-              min="1950"
-              max={new Date().getFullYear() + 2}
-              required
-            />
-          </div>
-
-          {/* Verifier info */}
-          <div className="section-divider">
-            <span>Verifier Information (optional)</span>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Your Name <span className="optional">(optional)</span></label>
-              <input
-                type="text"
-                className="form-control"
-                value={formData.verifierName}
-                onChange={(e) => set('verifierName', e.target.value)}
-                placeholder="Your name"
-              />
-            </div>
-            <div className="form-group">
-              <label>Your Email <span className="optional">(optional)</span></label>
-              <input
-                type="email"
-                className="form-control"
-                value={formData.verifierEmail}
-                onChange={(e) => set('verifierEmail', e.target.value)}
-                placeholder="your@email.com"
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Organization Type <span className="optional">(optional)</span></label>
-              <select
-                className="form-control"
-                value={formData.organizationType}
-                onChange={(e) => set('organizationType', e.target.value)}
-              >
-                <option value="">-- Select --</option>
-                <option>Employer / Company</option>
-                <option>Recruitment Agency</option>
-                <option>Government Body</option>
-                <option>University / Institution</option>
-                <option>Embassy / Consulate</option>
-                <option>Other</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Organization Name <span className="optional">(optional)</span></label>
-              <input
-                type="text"
-                className="form-control"
-                value={formData.organizationName}
-                onChange={(e) => set('organizationName', e.target.value)}
-                placeholder="e.g. ABC Company Ltd."
-              />
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label>Additional Notes <span className="optional">(optional)</span></label>
-            <textarea
-              className="form-control"
-              value={formData.notes}
-              onChange={(e) => set('notes', e.target.value)}
-              placeholder="Any extra details to help with the enquiry..."
-              rows={3}
-            />
-          </div>
-
-          <div className="form-actions">
-            <button type="button" className="btn-back-sm" onClick={() => navigate(-1)}>
-              ← Back
-            </button>
-            <button
-              type="submit"
-              className="btn-submit"
-              disabled={loading || degLoading || degrees.length === 0}
-            >
-              {loading ? (
-                <><div className="submit-spinner" /> Verifying...</>
+              <label>Degree / Programme</label>
+              {degLoading ? (
+                <select className="form-control" disabled>
+                  <option>Loading degrees...</option>
+                </select>
+              ) : degrees.length === 0 ? (
+                <select className="form-control" disabled>
+                  <option>No degrees configured for this university</option>
+                </select>
               ) : (
-                '🔍 Submit Verification'
+                <select
+                  className="form-control"
+                  value={formData.degree}
+                  onChange={(e) => set('degree', e.target.value)}
+                  required
+                >
+                  {degrees.map(d => (
+                    <option key={d.id} value={d.name}>{d.name}</option>
+                  ))}
+                </select>
               )}
-            </button>
-          </div>
-        </form>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Graduate's Full Name</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={formData.graduateName}
+                  onChange={(e) => set('graduateName', e.target.value)}
+                  placeholder="e.g. Maung Maung"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Father's Name <span className="optional">(on certificate)</span></label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={formData.fatherName}
+                  onChange={(e) => set('fatherName', e.target.value)}
+                  placeholder="e.g. U Kyaw Zin"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Year of Graduation</label>
+              <input
+                type="number"
+                className="form-control"
+                value={formData.graduationYear}
+                onChange={(e) => set('graduationYear', e.target.value)}
+                placeholder="e.g. 2023"
+                min="1950"
+                max={new Date().getFullYear() + 2}
+                required
+              />
+            </div>
+
+            {/* Verifier info */}
+            <div className="section-divider">
+              <span>Verifier Information (optional)</span>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Your Name <span className="optional">(optional)</span></label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={formData.verifierName}
+                  onChange={(e) => set('verifierName', e.target.value)}
+                  placeholder="Your name"
+                />
+              </div>
+              <div className="form-group">
+                <label>Your Email <span className="optional">(optional)</span></label>
+                <input
+                  type="email"
+                  className="form-control"
+                  value={formData.verifierEmail}
+                  onChange={(e) => set('verifierEmail', e.target.value)}
+                  placeholder="your@email.com"
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Organization Type <span className="optional">(optional)</span></label>
+                <select
+                  className="form-control"
+                  value={formData.organizationType}
+                  onChange={(e) => set('organizationType', e.target.value)}
+                >
+                  <option value="">-- Select --</option>
+                  <option>Employer / Company</option>
+                  <option>Recruitment Agency</option>
+                  <option>Government Body</option>
+                  <option>University / Institution</option>
+                  <option>Embassy / Consulate</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Organization Name <span className="optional">(optional)</span></label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={formData.organizationName}
+                  onChange={(e) => set('organizationName', e.target.value)}
+                  placeholder="e.g. ABC Company Ltd."
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Additional Notes <span className="optional">(optional)</span></label>
+              <textarea
+                className="form-control"
+                value={formData.notes}
+                onChange={(e) => set('notes', e.target.value)}
+                placeholder="Any extra details to help with the enquiry..."
+                rows={3}
+              />
+            </div>
+
+            <div className="form-actions">
+              <button type="button" className="btn-back-sm" onClick={() => navigate(-1)}>
+                ← Back
+              </button>
+              <button
+                type="submit"
+                className="btn-submit"
+                disabled={loading || degLoading || degrees.length === 0}
+              >
+                {loading ? (
+                  <><div className="submit-spinner" /> Verifying...</>
+                ) : (
+                  '🔍 Submit Verification'
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
+
+      {/* ── MAVER Footer ── */}
+      <Footer />
     </div>
   );
 };

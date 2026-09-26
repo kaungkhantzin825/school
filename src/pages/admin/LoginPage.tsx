@@ -26,6 +26,8 @@ const LoginPage = () => {
       // Redirect based on role
       if (user.role === 'super_admin') {
         navigate('/superadmin/admin');
+      } else if (user.role === 'verifier') {
+        navigate('/verifier/dashboard');
       } else {
         navigate('/user/admin');
       }
@@ -46,20 +48,6 @@ const LoginPage = () => {
           <p>Secure credential verification for educational institutions</p>
         </div>
 
-        <div className="login-features">
-          <div className="login-feature">
-            <span className="login-feature-icon">✓</span>
-            <span>Instant verification</span>
-          </div>
-          <div className="login-feature">
-            <span className="login-feature-icon">🔒</span>
-            <span>Secure & encrypted</span>
-          </div>
-          <div className="login-feature">
-            <span className="login-feature-icon">📊</span>
-            <span>Real-time analytics</span>
-          </div>
-        </div>
       </div>
 
       {/* Right Panel */}
@@ -129,31 +117,6 @@ const LoginPage = () => {
               )}
             </button>
           </form>
-
-          <div className="demo-box">
-            <h4>🔑 Demo Credentials</h4>
-            <div className="demo-credential">
-              <strong>
-                <span>👑</span>
-                <span>Super Admin</span>
-              </strong>
-              <code>superadmin@system.com</code>
-            </div>
-            <div className="demo-credential">
-              <strong>
-                <span>🎓</span>
-                <span>University Admin</span>
-              </strong>
-              <code>john@um1.edu</code>
-            </div>
-            <div className="demo-credential">
-              <strong>
-                <span>🔑</span>
-                <span>Password</span>
-              </strong>
-              <code>password123</code>
-            </div>
-          </div>
 
           <div className="login-back">
             <a href="/">← Back to Home</a>

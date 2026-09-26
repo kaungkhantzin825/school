@@ -1,0 +1,97 @@
+/* ComingSoonPage.css */
+
+.coming-soon-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--bg);
+}
+
+.coming-soon-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  background-color: #f8fafc; /* Clean light background */
+}
+
+.coming-soon-card {
+  background: var(--bg-card);
+  padding: 4rem 3rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+  max-width: 580px;
+  width: 100%;
+  border: 1px solid var(--border);
+  animation: scaleIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.coming-soon-title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: #1e3a8a; /* Deep blue color */
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.03em;
+  font-family: 'Inter', sans-serif;
+}
+
+.coming-soon-subtitle {
+  font-size: 1.15rem;
+  color: var(--text-secondary);
+  margin-bottom: 2.5rem;
+  line-height: 1.6;
+}
+
+.coming-soon-highlight {
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.coming-soon-btn {
+  background-color: #1e3a8a;
+  color: #ffffff;
+  border: none;
+  padding: 0.8rem 2.2rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 50px; /* Pill shape */
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.coming-soon-btn:hover {
+  background-color: #172554; /* Darker blue */
+  transform: translateY(-1px);
+}
+
+.coming-soon-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive Styles */
+@media (max-width: 640px) {
+  .coming-soon-card {
+    padding: 3rem 1.5rem;
+  }
+  
+  .coming-soon-title {
+    font-size: 2.75rem;
+  }
+  
+  .coming-soon-subtitle {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .coming-soon-btn {
+    padding: 0.7rem 1.8rem;
+    font-size: 0.9rem;
+  }
+}

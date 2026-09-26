@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/SearchPage.css';
 import { universityAPI } from '../services/api';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 interface University {
   id: number;
@@ -17,6 +19,7 @@ const SearchPage = () => {
   const [suggestions, setSuggestions]         = useState<University[]>([]);
   const [loading, setLoading]                 = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [brokenLogos, setBrokenLogos] = useState<Set<number>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -49,22 +52,8 @@ const SearchPage = () => {
   return (
     <div className="gov-page" onClick={() => setShowSuggestions(false)}>
 
-      {/* ── Top Official Bar ── */}
-      <div className="gov-top-bar">
-        <span className="gov-top-bar-brand">National Academic Verification System</span>
-        <span className="gov-top-bar-right">Ministry of Education</span>
-      </div>
-
-      {/* ── Header ── */}
-      <header className="gov-header">
-        <div className="gov-header-inner">
-          <div className="gov-seal">🎓</div>
-          <div className="gov-header-text">
-            <h1 className="gov-title">National Academic Verification Portal</h1>
-            <p className="gov-subtitle">Official academic credential verification · Ministry of Education</p>
-          </div>
-        </div>
-      </header>
+      {/* ── MAVER Header ── */}
+      <Header />
 
       {/* ── Main ── */}
       <main className="gov-main">
@@ -112,8 +101,13 @@ const SearchPage = () => {
               <ul className="gov-suggestions">
                 {suggestions.map((uni) => (
                   <li key={uni.id} className="gov-suggestion-item" onClick={() => handleSelectUniversity(uni)}>
-                    {uni.logo_url ? (
-                      <img src={uni.logo_url} alt="Logo" className="gov-suggestion-logo" />
+                    {uni.logo_url && !brokenLogos.has(uni.id) ? (
+                      <img
+                        src={uni.logo_url}
+                        alt="Logo"
+                        className="gov-suggestion-logo"
+                        onError={() => setBrokenLogos(prev => new Set(prev).add(uni.id))}
+                      />
                     ) : (
                       <span className="gov-suggestion-logo-placeholder">🏛️</span>
                     )}
@@ -140,12 +134,8 @@ const SearchPage = () => {
         </div>
       </main>
 
-      {/* ── Footer ── */}
-      <footer className="gov-footer">
-        <div className="gov-footer-inner">
-          <span>© {new Date().getFullYear()} Ministry of Education · All rights reserved</span>
-        </div>
-      </footer>
+      {/* ── MAVER Footer ── */}
+      <Footer />
     </div>
   );
 };

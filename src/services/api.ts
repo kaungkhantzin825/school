@@ -23,11 +23,36 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+
+    // Session expired / revoked — clear it and send the user to sign in again,
+    // but only if they were actually signed in (avoids bouncing public pages).
+    if (status === 401) {
+      const wasAuthed = !!localStorage.getItem('auth_token');
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (wasAuthed && !window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login';
+      }
     }
+
+    // Give callers a consistent, human-readable message to show.
+    if (!error.response) {
+      error.friendlyMessage = 'Cannot reach the server. Please check your connection.';
+    } else if (status === 429) {
+      const retry = error.response.headers?.['retry-after'];
+      error.friendlyMessage = retry
+        ? `Too many attempts. Please wait ${retry} seconds and try again.`
+        : 'Too many attempts. Please wait a moment and try again.';
+    } else if (status === 403) {
+      error.friendlyMessage = error.response.data?.message
+        || 'You do not have permission to perform this action.';
+    } else if (status >= 500) {
+      error.friendlyMessage = 'The server ran into a problem. Please try again shortly.';
+    } else {
+      error.friendlyMessage = error.response.data?.message || '';
+    }
+
     return Promise.reject(error);
   }
 );
@@ -92,6 +117,14 @@ export const studentAPI = {
   
   bulkUpload: (universityId: number, students: any[]) =>
     api.post('/students/bulk-upload', { university_id: universityId, students }),
+
+  uploadPhoto: (file: File) => {
+    const form = new FormData();
+    form.append('photo', file);
+    return api.post('/students/upload-photo', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 };
 
 // Verification API
@@ -104,6 +137,12 @@ export const verificationAPI = {
   
   getRecentActivity: () =>
     api.get('/verification-logs/recent'),
+
+  recheck: (logId: number) =>
+    api.post(`/verification-logs/${logId}/recheck`),
+
+  resolveLog: (logId: number, data: { action: 'approve' | 'reject'; notes?: string; archive_ref?: string; student_id?: string; nrc_number?: string; date_of_birth?: string; gender?: string }) =>
+    api.post(`/verification-logs/${logId}/resolve`, data),
 };
 
 // User API
@@ -122,6 +161,18 @@ export const userAPI = {
   
   delete: (id: number) =>
     api.delete(`/users/${id}`),
+};
+
+// Registration API (verifier-organization sign up)
+export const registrationAPI = {
+  create: (data: any) =>
+    api.post('/registrations', data),
+
+  getAll: (params?: any) =>
+    api.get('/registrations', { params }),
+
+  updateStatus: (id: number, status: string, review_notes?: string) =>
+    api.patch(`/registrations/${id}`, { status, review_notes }),
 };
 
 // Degree API

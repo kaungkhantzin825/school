@@ -1,0 +1,263 @@
+/* Header.css — MAVER Navigation Header */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ── Top Main Navbar ── */
+.maver-header {
+  background: #ffffff;
+  border-bottom: 1px solid #e8ecf0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  top: 0;
+  z-index: 1000;
+  font-family: 'Inter', 'Noto Sans', sans-serif;
+}
+
+.maver-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 2.5rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  gap: 1.5rem;
+}
+
+/* ── Logo ── */
+.maver-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.maver-logo-img {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.maver-logo:hover .maver-logo-img {
+  transform: scale(1.03);
+}
+
+.maver-logo-icon {
+  width: 52px;
+  height: 52px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.maver-logo-diamond {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #1a3a7c 0%, #2563eb 100%);
+  transform: rotate(45deg);
+  border-radius: 4px;
+  position: absolute;
+  opacity: 0.12;
+}
+
+.maver-logo-text-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+.maver-logo-brand {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #1a3a7c;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-family: 'Inter', sans-serif;
+}
+
+.maver-logo-brand span.accent {
+  color: #2563eb;
+}
+
+.maver-logo-tagline {
+  display: block;
+  font-size: 0.5rem;
+  font-weight: 600;
+  color: #1a3a7c;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.3;
+  margin-top: 1px;
+  max-width: 130px;
+}
+
+/* ── Nav Links ── */
+.maver-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.maver-nav-links a {
+  text-decoration: none;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.maver-nav-links a:hover,
+.maver-nav-links a.active {
+  background: #eff6ff;
+  color: #1a3a7c;
+}
+
+/* ── Auth Buttons ── */
+.maver-auth-btns {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.maver-btn-signup {
+  padding: 0.45rem 1.2rem;
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.2s, transform 0.1s;
+  text-decoration: none;
+}
+
+.maver-btn-signup:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+}
+
+.maver-btn-signin {
+  padding: 0.45rem 1.2rem;
+  background: #f59e0b;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.2s, transform 0.1s;
+  text-decoration: none;
+}
+
+.maver-btn-signin:hover {
+  background: #d97706;
+  transform: translateY(-1px);
+}
+
+/* ── Sub Navigation Bar ── */
+.maver-subnav {
+  background: #e8f4fd;
+  border-top: 1px solid #c8dff0;
+  border-bottom: 1px solid #c8dff0;
+}
+
+.maver-subnav-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.maver-subnav-link {
+  display: block;
+  padding: 0.55rem 1.25rem;
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: #1a3a7c;
+  text-decoration: none;
+  border-right: 1px solid #b8d0e8;
+  transition: background 0.15s, color 0.15s;
+  font-family: 'Inter', sans-serif;
+  white-space: nowrap;
+}
+
+.maver-subnav-link:first-child {
+  border-left: 1px solid #b8d0e8;
+}
+
+.maver-subnav-link:hover,
+.maver-subnav-link.active {
+  background: #bfdbfe;
+  color: #1e40af;
+}
+
+/* ── Mobile Hamburger ── */
+.maver-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 0.5rem;
+  background: none;
+  border: none;
+}
+
+.maver-hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #374151;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .maver-navbar {
+    padding: 0.75rem 1.25rem;
+  }
+
+  .maver-nav-links {
+    display: none;
+  }
+
+  .maver-hamburger {
+    display: flex;
+  }
+
+  .maver-auth-btns {
+    gap: 0.4rem;
+  }
+
+  .maver-btn-signup,
+  .maver-btn-signin {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+  }
+
+  .maver-subnav-inner {
+    padding: 0 1.25rem;
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .maver-logo-brand {
+    font-size: 1.4rem;
+  }
+
+  .maver-logo-tagline {
+    display: none;
+  }
+}

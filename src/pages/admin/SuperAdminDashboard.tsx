@@ -1,12 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { universityAPI, userAPI, verificationAPI } from '../../services/api';
+import { universityAPI, userAPI, verificationAPI, registrationAPI } from '../../services/api';
 import '../../styles/admin/SuperAdminDashboard.css';
 
-type Tab = 'dashboard' | 'universities' | 'users' | 'analytics' | 'settings';
+type Tab = 'dashboard' | 'universities' | 'users' | 'registrations' | 'analytics' | 'settings';
 
 interface University { id: number; name: string; location: string; description?: string; logo_url?: string; status: 'active'|'inactive'; students_count?: number; }
 interface User       { id: number; name: string; email: string; role: string; university?: { name: string }; }
+interface Registration {
+  id: number;
+  full_name: string;
+  email: string;
+  organization_name: string;
+  organization_type: string;
+  country: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
+}
 
 const initUni  = { name: '', location: '', description: '', logo_url: '', status: 'active' as const };
 const initUser = { name: '', email: '', password: '', role: 'university_admin', university_id: '' };
@@ -30,6 +40,8 @@ const SuperAdminDashboard = () => {
   const [users,        setUsers]        = useState<User[]>([]);
   const [stats,        setStats]        = useState({ total_universities: 0, active_universities: 0, total_students: 0, total_verifications: 0, success_rate: 0 });
   const [activities,   setActivities]   = useState<any[]>([]);
+  const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [regBusyId,   setRegBusyId]     = useState<number | null>(null);
   const [_loading,     setLoading]      = useState(false);
 
   /* Modals */
@@ -52,16 +64,19 @@ const SuperAdminDashboard = () => {
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const [uniRes, userRes, statsRes, actRes] = await Promise.all([
+      const [uniRes, userRes, statsRes, actRes, regRes] = await Promise.all([
         universityAPI.getAll(),
         userAPI.getAll(),
         universityAPI.stats(),
         verificationAPI.getRecentActivity(),
+        registrationAPI.getAll(),
       ]);
-      setUniversities(uniRes.data);
-      setUsers(userRes.data);
+      // /users and /registrations are paginated; unwrap the page payload.
+      setUniversities(uniRes.data.data || uniRes.data);
+      setUsers(userRes.data.data || userRes.data);
       setStats(statsRes.data);
-      setActivities(actRes.data);
+      setActivities(actRes.data.data || actRes.data);
+      setRegistrations(regRes.data.data || regRes.data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -106,6 +121,22 @@ const SuperAdminDashboard = () => {
     await userAPI.delete(id); fetchAll();
   };
 
+  /* Registration review */
+  const reviewRegistration = async (id: number, status: 'approved' | 'rejected') => {
+    if (status === 'rejected' && !confirm('Reject this registration request?')) return;
+    setRegBusyId(id);
+    try {
+      await registrationAPI.updateStatus(id, status);
+      fetchAll();
+    } catch (e: any) {
+      alert(e.response?.data?.message || 'Could not update this registration');
+    } finally {
+      setRegBusyId(null);
+    }
+  };
+
+  const pendingRegCount = registrations.filter(r => r.status === 'pending').length;
+
   const filteredUnis  = universities.filter(u => `${u.name} ${u.location}`.toLowerCase().includes(uniSearch.toLowerCase()));
   const filteredUsers = users.filter(u => `${u.name} ${u.email}`.toLowerCase().includes(userSearch.toLowerCase()));
 
@@ -130,11 +161,12 @@ const SuperAdminDashboard = () => {
         <nav className="sd-nav">
           <span className="sd-nav-label">Main Menu</span>
           {([
-            ['dashboard',    '📊', 'Dashboard'],
-            ['universities', '🏛️', 'Universities'],
-            ['users',        '👥', 'User Management'],
-            ['analytics',    '📈', 'Analytics'],
-            ['settings',     '⚙️', 'Settings'],
+            ['dashboard',     '📊', 'Dashboard'],
+            ['universities',  '🏛️', 'Universities'],
+            ['users',         '👥', 'User Management'],
+            ['registrations', '📝', 'Registrations'],
+            ['analytics',     '📈', 'Analytics'],
+            ['settings',      '⚙️', 'Settings'],
           ] as [Tab, string, string][]).map(([id, icon, label]) => (
             <button
               key={id}
@@ -145,6 +177,9 @@ const SuperAdminDashboard = () => {
               {label}
               {id === 'universities' && universities.length > 0 && (
                 <span className="nav-item-badge">{universities.length}</span>
+              )}
+              {id === 'registrations' && pendingRegCount > 0 && (
+                <span className="nav-item-badge">{pendingRegCount}</span>
               )}
             </button>
           ))}
@@ -169,11 +204,12 @@ const SuperAdminDashboard = () => {
         {/* Topbar */}
         <div className="sd-topbar">
           <span className="sd-topbar-title">
-            {tab === 'dashboard'    && '📊 Dashboard Overview'}
-            {tab === 'universities' && '🏛️ University Management'}
-            {tab === 'users'        && '👥 User Management'}
-            {tab === 'analytics'    && '📈 Analytics & Reports'}
-            {tab === 'settings'     && '⚙️ System Settings'}
+            {tab === 'dashboard'     && '📊 Dashboard Overview'}
+            {tab === 'universities'  && '🏛️ University Management'}
+            {tab === 'users'         && '👥 User Management'}
+            {tab === 'registrations' && '📝 Verifier Registrations'}
+            {tab === 'analytics'     && '📈 Analytics & Reports'}
+            {tab === 'settings'      && '⚙️ System Settings'}
           </span>
           <div className="sd-topbar-right">
             <button className="topbar-icon-btn" title="Refresh" onClick={fetchAll}>🔄</button>
@@ -327,13 +363,75 @@ const SuperAdminDashboard = () => {
                         <td>{u.email}</td>
                         <td>
                           <span className={`status-pill ${u.role === 'super_admin' ? 'status-active' : 'status-inactive'}`}>
-                            {u.role === 'super_admin' ? '👑 Super Admin' : '🏛️ Uni Admin'}
+                            {u.role === 'super_admin' ? '👑 Super Admin' : u.role === 'verifier' ? '🔍 Verifier' : '🏛️ Uni Admin'}
                           </span>
                         </td>
                         <td>{u.university?.name || '—'}</td>
                         <td>
                           <button className="action-btn action-edit"   onClick={() => openEditUser(u)}>✏️ Edit</button>
                           <button className="action-btn action-delete" onClick={() => deleteUser(u.id)}>🗑️ Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* ── REGISTRATIONS ── */}
+          {tab === 'registrations' && (
+            <div className="table-card">
+              <div className="table-card-header">
+                <div className="table-search" style={{ visibility: 'hidden' }} />
+                <span style={{ color: '#64748b', fontSize: '0.85rem' }}>
+                  Approving creates a verifier login and emails them their credentials.
+                </span>
+              </div>
+              <table className="sd-table">
+                <thead>
+                  <tr>
+                    <th>#</th><th>Full Name</th><th>Email</th><th>Organization</th>
+                    <th>Type</th><th>Country</th><th>Submitted</th><th>Status</th><th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {registrations.length === 0
+                    ? <tr><td colSpan={9}><div className="empty-state"><span>📝</span><p>No registration requests yet</p></div></td></tr>
+                    : registrations.map((r, i) => (
+                      <tr key={r.id}>
+                        <td>{i + 1}</td>
+                        <td className="td-primary">{r.full_name}</td>
+                        <td>{r.email}</td>
+                        <td>{r.organization_name}</td>
+                        <td>{r.organization_type}</td>
+                        <td>{r.country}</td>
+                        <td>{new Date(r.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                        <td>
+                          <span className={`status-pill ${r.status === 'approved' ? 'status-active' : 'status-inactive'}`}>
+                            {r.status}
+                          </span>
+                        </td>
+                        <td>
+                          {r.status === 'pending' ? (
+                            <>
+                              <button
+                                className="action-btn action-edit"
+                                disabled={regBusyId === r.id}
+                                onClick={() => reviewRegistration(r.id, 'approved')}
+                              >
+                                ✅ Approve
+                              </button>
+                              <button
+                                className="action-btn action-delete"
+                                disabled={regBusyId === r.id}
+                                onClick={() => reviewRegistration(r.id, 'rejected')}
+                              >
+                                ✕ Reject
+                              </button>
+                            </>
+                          ) : (
+                            <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>—</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -499,6 +597,7 @@ const SuperAdminDashboard = () => {
                   <select className="modal-input" value={userForm.role} onChange={e => setUsr('role', e.target.value)}>
                     <option value="university_admin">University Admin</option>
                     <option value="super_admin">Super Admin</option>
+                    <option value="verifier">Verifier</option>
                   </select>
                 </div>
               </div>
