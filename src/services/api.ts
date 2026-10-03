@@ -121,8 +121,10 @@ export const studentAPI = {
   uploadPhoto: (file: File) => {
     const form = new FormData();
     form.append('photo', file);
+    // Accept must stay explicit: without it the server can't tell this is an
+    // API call and answers auth failures with a redirect instead of JSON.
     return api.post('/students/upload-photo', form, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': 'multipart/form-data', Accept: 'application/json' },
     });
   },
 };
