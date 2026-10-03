@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { universityAPI, userAPI, verificationAPI, registrationAPI } from '../../services/api';
 import '../../styles/admin/SuperAdminDashboard.css';
+import { alertSuccess, alertError, confirmDelete, confirmAction } from '../../utils/alerts';
 
 type Tab = 'dashboard' | 'universities' | 'users' | 'registrations' | 'analytics' | 'settings';
 
@@ -95,10 +96,10 @@ const SuperAdminDashboard = () => {
       else         await universityAPI.create(uniForm);
       setUniModal(false);
       fetchAll();
-    } catch (e: any) { alert(e.response?.data?.message || 'Error saving university'); }
+    } catch (e: any) { alertError('Save Failed', e.friendlyMessage || e.response?.data?.message || 'Error saving university.'); }
   };
   const deleteUni = async (id: number) => {
-    if (!confirm('Delete this university?')) return;
+    if (!await confirmDelete('Delete this university?', 'All its students and records will be removed. This cannot be undone.')) return;
     await universityAPI.delete(id); fetchAll();
   };
 
@@ -114,22 +115,27 @@ const SuperAdminDashboard = () => {
       else          await userAPI.create(payload);
       setUserModal(false);
       fetchAll();
-    } catch (e: any) { alert(e.response?.data?.message || 'Error saving user'); }
+    } catch (e: any) { alertError('Save Failed', e.friendlyMessage || e.response?.data?.message || 'Error saving user.'); }
   };
   const deleteUser = async (id: number) => {
-    if (!confirm('Delete this user?')) return;
+    if (!await confirmDelete('Delete this user?', 'They will immediately lose access to the system.')) return;
     await userAPI.delete(id); fetchAll();
   };
 
   /* Registration review */
   const reviewRegistration = async (id: number, status: 'approved' | 'rejected') => {
-    if (status === 'rejected' && !confirm('Reject this registration request?')) return;
+    if (status === 'rejected' && !await confirmAction('Reject this registration?', 'The applicant will not be given access.', 'Yes, reject')) return;
     setRegBusyId(id);
     try {
       await registrationAPI.updateStatus(id, status);
       fetchAll();
+      if (status === 'approved') {
+        alertSuccess('Registration Approved', 'A verifier account has been created and their login details emailed.');
+      } else {
+        alertSuccess('Registration Rejected', 'The applicant will not be given access.');
+      }
     } catch (e: any) {
-      alert(e.response?.data?.message || 'Could not update this registration');
+      alertError('Update Failed', e.friendlyMessage || e.response?.data?.message || 'Could not update this registration.');
     } finally {
       setRegBusyId(null);
     }

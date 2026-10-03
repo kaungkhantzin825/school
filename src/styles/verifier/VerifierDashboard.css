@@ -247,6 +247,12 @@
   font-size: 0.86rem;
 }
 
+.col-uni {
+  font-weight: 600;
+  color: #14353d;
+  min-width: 170px;
+}
+
 .col-year {
   font-weight: 500;
 }

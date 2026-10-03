@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { studentAPI, verificationAPI, degreeAPI, universityAPI } from '../../services/api';
 import '../../styles/admin/UserAdminDashboard.css';
+import { alertSuccess, alertError, alertWarning, confirmDelete } from '../../utils/alerts';
 
 type Tab = 'upload' | 'students' | 'pending_review' | 'logs' | 'degree' | 'addstudent' | 'settings';
 
@@ -16,6 +17,9 @@ interface Student {
   degree: string;
   specialization: string;
   graduation_year: number;
+  photo_url?: string | null;
+  university?: { name: string; location: string } | null;
+  created_at?: string;
 }
 
 interface Log {
@@ -31,6 +35,47 @@ interface Log {
 }
 
 const PAGE_SIZE = 10;
+
+const fmtLongDate = (d?: string | null) =>
+  d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+
+/**
+ * Student photo with a graceful fallback — a broken or missing photo_url
+ * shows the graduate's initials rather than a broken-image icon.
+ */
+const StudentAvatar = ({ student, size }: { student: Student; size: number }) => {
+  const [broken, setBroken] = useState(false);
+
+  const initials = student.graduate_name
+    ?.split(' ').filter(Boolean).map(p => p[0]).join('').toUpperCase().slice(0, 2) || '?';
+
+  const base: React.CSSProperties = {
+    width: size, height: size, borderRadius: size > 60 ? 12 : '50%',
+    objectFit: 'cover', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0, overflow: 'hidden',
+  };
+
+  if (!student.photo_url || broken) {
+    return (
+      <div style={{
+        ...base,
+        background: '#e0e7ff', color: '#4338ca',
+        fontWeight: 700, fontSize: size * 0.36,
+      }}>
+        {initials}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={student.photo_url}
+      alt={student.graduate_name}
+      style={{ ...base, border: '1px solid #e2e8f0' }}
+      onError={() => setBroken(true)}
+    />
+  );
+};
 
 const UserAdminDashboard = () => {
   const navigate = useNavigate();
@@ -61,6 +106,7 @@ const UserAdminDashboard = () => {
   /* Students pagination + search */
   const [studentSearch, setStudentSearch] = useState('');
   const [studentTotal,  setStudentTotal]  = useState(0);
+  const [detailStudent, setDetailStudent] = useState<Student | null>(null);
   const [loadError,     setLoadError]     = useState('');
   const [studentPage,   setStudentPage]   = useState(1);
 
@@ -132,6 +178,7 @@ const UserAdminDashboard = () => {
         verification_notice: uniForm.verification_notice,
       });
       setSettingsSuccess(true);
+      alertSuccess('Settings Saved', 'Your university profile has been updated.');
       const updatedUser = { ...user, university: res.data };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUniForm({
@@ -142,7 +189,7 @@ const UserAdminDashboard = () => {
       });
       setTimeout(() => setSettingsSuccess(false), 3000);
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to update university settings');
+      alertError('Save Failed', err.friendlyMessage || err.response?.data?.message || 'Failed to update university settings.');
     } finally {
       setSettingsSubmitting(false);
     }
@@ -154,8 +201,8 @@ const UserAdminDashboard = () => {
   const openEditDegree = (d: any) => { setEditDegree(d); setDegreeForm({ name: d.name, description: d.description || '', code: d.code || '', level: d.level || 'bachelor', status: d.status || 'active' }); setDegreeModal(true); };
 
   const saveDegree = async () => {
-    if (!degreeForm.name.trim()) { alert('Degree name is required'); return; }
-    if (!user?.university_id) { alert('University ID not found'); return; }
+    if (!degreeForm.name.trim()) { alertWarning('Degree Name Required', 'Please enter a degree name.'); return; }
+    if (!user?.university_id) { alertError('University Not Found', 'Your account is not linked to a university.'); return; }
     setDegreeSubmitting(true);
     try {
       const payload = { ...degreeForm, university_id: user.university_id };
@@ -164,19 +211,19 @@ const UserAdminDashboard = () => {
       setDegreeModal(false);
       fetchDegrees();
     } catch (e: any) {
-      alert(e.response?.data?.message || 'Failed to save degree');
+      alertError('Save Failed', e.friendlyMessage || e.response?.data?.message || 'Failed to save degree.');
     } finally {
       setDegreeSubmitting(false);
     }
   };
 
   const deleteDegree = async (id: number) => {
-    if (!confirm('Delete this degree?')) return;
+    if (!await confirmDelete('Delete this degree?', 'This cannot be undone.')) return;
     try {
       await degreeAPI.delete(id);
       fetchDegrees();
     } catch (e: any) {
-      alert(e.response?.data?.message || 'Failed to delete degree');
+      alertError('Delete Failed', e.friendlyMessage || e.response?.data?.message || 'Failed to delete degree.');
     }
   };
 
@@ -205,8 +252,8 @@ const UserAdminDashboard = () => {
 
   const handlePhotoPick = (file: File | undefined) => {
     if (!file) return;
-    if (!file.type.startsWith('image/')) { alert('Please choose an image file.'); return; }
-    if (file.size > 4 * 1024 * 1024) { alert('Image must be 4 MB or smaller.'); return; }
+    if (!file.type.startsWith('image/')) { alertWarning('Invalid File', 'Please choose an image file (JPG, PNG or WEBP).'); return; }
+    if (file.size > 4 * 1024 * 1024) { alertWarning('Image Too Large', 'The photo must be 4 MB or smaller.'); return; }
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
   };
@@ -234,7 +281,7 @@ const UserAdminDashboard = () => {
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.university_id) { alert('University ID not found'); return; }
+    if (!user?.university_id) { alertError('University Not Found', 'Your account is not linked to a university.'); return; }
     setSubmitting(true);
     setSubmitSuccess(false);
     try {
@@ -248,17 +295,13 @@ const UserAdminDashboard = () => {
         university_id: user.university_id,
         ...(photo_url ? { photo_url } : {}),
       });
+      const savedName = studentForm.graduate_name;
       setSubmitSuccess(true);
       resetStudentForm();
-      // The banner renders above the form while the Save button sits at the
-      // bottom, so scroll it into view — otherwise the save looks like it
-      // did nothing.
-      requestAnimationFrame(() => {
-        successRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
+      alertSuccess('Student Added Successfully!', `${savedName} has been saved to the university records.`);
       setTimeout(() => setSubmitSuccess(false), 6000);
     } catch (e: any) {
-      alert(e.friendlyMessage || e.response?.data?.message || 'Failed to add student');
+      alertError('Could Not Save Student', e.friendlyMessage || e.response?.data?.message || 'Failed to add student.');
     } finally {
       setSubmitting(false);
     }
@@ -343,7 +386,7 @@ const UserAdminDashboard = () => {
       fetchStudents();
       setTimeout(() => setResolveSuccess(null), 5000);
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to process request.');
+      alertError('Could Not Process Request', err.friendlyMessage || err.response?.data?.message || 'Failed to process request.');
     } finally {
       setResolving(false);
     }
@@ -406,7 +449,7 @@ const UserAdminDashboard = () => {
   };
 
   const handleFile = (file: File) => {
-    if (!file.name.endsWith('.csv')) { alert('Please upload a CSV file.'); return; }
+    if (!file.name.endsWith('.csv')) { alertWarning('Invalid File', 'Please upload a .csv file.'); return; }
     setUploadedFile(file);
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -447,7 +490,7 @@ const UserAdminDashboard = () => {
       const res = await studentAPI.bulkUpload(user.university_id, students);
       setUploadResult(res.data);
     } catch (e: any) {
-      alert(e.response?.data?.message || 'Upload failed. Please check your CSV format.');
+      alertError('Upload Failed', e.friendlyMessage || e.response?.data?.message || 'Upload failed. Please check your CSV format.');
     } finally {
       setUploading(false);
     }
@@ -720,19 +763,21 @@ const UserAdminDashboard = () => {
                   <thead>
                     <tr>
                       <th>No.</th>
+                      <th>Photo</th>
                       <th>Graduate Name</th>
                       <th>Gender</th>
                       <th>Date of Birth</th>
                       <th>NRC Number</th>
                       <th>Degree</th>
                       <th>Year</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
-                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Loading students...</td></tr>
+                      <tr><td colSpan={9} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Loading students...</td></tr>
                     ) : stuPaged.length === 0 ? (
-                      <tr><td colSpan={7}>
+                      <tr><td colSpan={9}>
                         <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem', color: '#94a3b8', textAlign: 'center' }}>
                           <span style={{ fontSize: '3rem' }}>👨‍🎓</span>
                           <p>No students found. {studentSearch ? 'Try a different search.' : 'Upload a CSV to get started.'}</p>
@@ -741,6 +786,9 @@ const UserAdminDashboard = () => {
                     ) : stuPaged.map((s, i) => (
                       <tr key={s.id || i}>
                         <td>{(studentPage - 1) * PAGE_SIZE + i + 1}</td>
+                        <td>
+                          <StudentAvatar student={s} size={38} />
+                        </td>
                         <td className="td-name">
                           {s.graduate_name}
                           <span style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', fontWeight: 400 }}>
@@ -766,6 +814,15 @@ const UserAdminDashboard = () => {
                           <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: '100px', fontSize: '0.78rem', fontWeight: 600 }}>
                             {s.graduation_year}
                           </span>
+                        </td>
+                        <td>
+                          <button
+                            className="action-btn action-edit"
+                            style={{ whiteSpace: 'nowrap' }}
+                            onClick={() => setDetailStudent(s)}
+                          >
+                            👁️ Detail
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -1688,6 +1745,74 @@ const UserAdminDashboard = () => {
               </button>
               <button className="btn-modal-submit" onClick={saveDegree} disabled={degreeSubmitting} style={{ padding: '0.625rem 1.25rem', borderRadius: '8px', border: 'none', background: '#10b981', color: 'white', fontWeight: 600, cursor: 'pointer' }}>
                 {degreeSubmitting ? '⏳ Saving...' : (editDegree ? '💾 Save Changes' : '＋ Create Degree')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Student Detail Modal ── */}
+      {detailStudent && (
+        <div
+          className="modal-overlay"
+          onClick={() => setDetailStudent(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '1rem' }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: 14, width: '100%', maxWidth: 580, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '1.5rem', borderBottom: '1px solid #e2e8f0' }}>
+              <StudentAvatar student={detailStudent} size={88} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>{detailStudent.graduate_name}</h2>
+                <div style={{ color: '#64748b', fontSize: '0.85rem', marginTop: 4 }}>
+                  {detailStudent.degree}
+                  {detailStudent.specialization ? ` · ${detailStudent.specialization}` : ''}
+                </div>
+                <span style={{ display: 'inline-block', marginTop: 8, background: '#eff6ff', color: '#1d4ed8', padding: '2px 10px', borderRadius: 100, fontSize: '0.78rem', fontWeight: 600 }}>
+                  Class of {detailStudent.graduation_year}
+                </span>
+              </div>
+              <button
+                onClick={() => setDetailStudent(null)}
+                style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: '#64748b', alignSelf: 'flex-start' }}
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Fields */}
+            <div style={{ padding: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.1rem' }}>
+              {([
+                ["Father's Name", detailStudent.father_name || '—'],
+                ['Gender', detailStudent.gender || '—'],
+                ['Date of Birth', fmtLongDate(detailStudent.date_of_birth)],
+                ['NRC Number', detailStudent.nrc_number || '—'],
+                ['Graduate Reg. Number', detailStudent.student_id || '—'],
+                ['Graduation Year', String(detailStudent.graduation_year ?? '—')],
+                ['University', detailStudent.university?.name || user?.university?.name || '—'],
+                ['Record Added', fmtLongDate(detailStudent.created_at)],
+              ] as [string, string][]).map(([label, value]) => (
+                <div key={label}>
+                  <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#94a3b8', fontWeight: 600, marginBottom: 4 }}>
+                    {label}
+                  </div>
+                  <div style={{ fontSize: '0.9rem', color: '#1e293b', fontFamily: label.includes('NRC') ? 'monospace' : 'inherit', wordBreak: 'break-word' }}>
+                    {value}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setDetailStudent(null)}
+                style={{ padding: '0.6rem 1.4rem', borderRadius: 8, border: '1px solid #e2e8f0', background: '#fff', color: '#475569', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Close
               </button>
             </div>
           </div>

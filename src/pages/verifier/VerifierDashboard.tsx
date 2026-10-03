@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { verificationAPI } from '../../services/api';
+import { alertSuccess, alertError, alertInfo } from '../../utils/alerts';
 import '../../styles/verifier/VerifierDashboard.css';
 
 type Tab = 'dashboard' | 'verified' | 'pending';
@@ -131,14 +132,14 @@ const VerifierDashboard = () => {
     try {
       const res = await verificationAPI.recheck(log.id);
       if (res.data.status === 'success') {
-        alert(`✅ ${log.searched_name} has now been found and verified.`);
+        alertSuccess('Credential Verified!', `${log.searched_name} has now been found in the university records.`);
         fetchPending();
         fetchVerified();
       } else {
-        alert(`Manual registrar review in progress for ${log.request_ref || ('#VR-' + log.id)}. No changes detected yet.`);
+        alertInfo('Still Under Review', `The registrar is still checking ${log.request_ref || ('#VR-' + log.id)}. Please check back later.`);
       }
     } catch {
-      alert('Could not review this request right now. Please try again.');
+      alertError('Review Failed', 'Could not review this request right now. Please try again.');
     } finally {
       setReviewingId(null);
     }
@@ -286,6 +287,7 @@ const VerifierDashboard = () => {
                   <thead>
                     <tr>
                       <th className="col-no">No.</th>
+                      <th>University Name</th>
                       <th>Graduate Name</th>
                       <th>Gender</th>
                       <th className="col-center">Graduate Reg. Number</th>
@@ -298,7 +300,7 @@ const VerifierDashboard = () => {
                   <tbody>
                     {verified.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="vd-empty-cell">
+                        <td colSpan={9} className="vd-empty-cell">
                           No verified records found.
                         </td>
                       </tr>
@@ -306,6 +308,7 @@ const VerifierDashboard = () => {
                       verified.map((log, idx) => (
                         <tr key={log.id}>
                           <td className="col-no">{idx + 1}</td>
+                          <td className="col-uni">{log.university?.name || '—'}</td>
                           <td className="col-bold">{log.student?.graduate_name || log.searched_name}</td>
                           <td>{log.student?.gender || '—'}</td>
                           <td className="col-center col-reg">
