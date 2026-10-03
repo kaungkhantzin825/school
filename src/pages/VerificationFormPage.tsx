@@ -25,10 +25,6 @@ const VerificationFormPage = () => {
     graduateName:     '',
     fatherName:       '',
     graduationYear:   '',
-    verifierName:     '',
-    verifierEmail:    '',
-    organizationType: '',
-    organizationName: '',
     notes:            '',
   });
   const [loading, setLoading] = useState(false);
@@ -79,10 +75,8 @@ const VerificationFormPage = () => {
         father_name:       formData.fatherName,
         degree:            formData.degree,
         graduation_year:   parseInt(formData.graduationYear),
-        verifier_name:     formData.verifierName  || undefined,
-        verifier_email:    formData.verifierEmail || undefined,
-        organization_type: formData.organizationType || undefined,
-        organization_name: formData.organizationName || undefined,
+        // Verifier identity is taken from the signed-in account on the server,
+        // so it can't be typed in (or faked) here any more.
         notes:             formData.notes || undefined,
       });
 
@@ -219,63 +213,6 @@ const VerificationFormPage = () => {
                 max={new Date().getFullYear() + 2}
                 required
               />
-            </div>
-
-            {/* Verifier info */}
-            <div className="section-divider">
-              <span>Verifier Information (optional)</span>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>Your Name <span className="optional">(optional)</span></label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={formData.verifierName}
-                  onChange={(e) => set('verifierName', e.target.value)}
-                  placeholder="Your name"
-                />
-              </div>
-              <div className="form-group">
-                <label>Your Email <span className="optional">(optional)</span></label>
-                <input
-                  type="email"
-                  className="form-control"
-                  value={formData.verifierEmail}
-                  onChange={(e) => set('verifierEmail', e.target.value)}
-                  placeholder="your@email.com"
-                />
-              </div>
-            </div>
-
-            <div className="form-row">
-              <div className="form-group">
-                <label>Organization Type <span className="optional">(optional)</span></label>
-                <select
-                  className="form-control"
-                  value={formData.organizationType}
-                  onChange={(e) => set('organizationType', e.target.value)}
-                >
-                  <option value="">-- Select --</option>
-                  <option>Employer / Company</option>
-                  <option>Recruitment Agency</option>
-                  <option>Government Body</option>
-                  <option>University / Institution</option>
-                  <option>Embassy / Consulate</option>
-                  <option>Other</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Organization Name <span className="optional">(optional)</span></label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={formData.organizationName}
-                  onChange={(e) => set('organizationName', e.target.value)}
-                  placeholder="e.g. ABC Company Ltd."
-                />
-              </div>
             </div>
 
             <div className="form-group">
