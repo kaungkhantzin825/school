@@ -194,6 +194,7 @@ const UserAdminDashboard = () => {
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const successRef = useRef<HTMLDivElement>(null);
 
   /* Student photo upload */
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -249,9 +250,15 @@ const UserAdminDashboard = () => {
       });
       setSubmitSuccess(true);
       resetStudentForm();
-      setTimeout(() => setSubmitSuccess(false), 3000);
+      // The banner renders above the form while the Save button sits at the
+      // bottom, so scroll it into view — otherwise the save looks like it
+      // did nothing.
+      requestAnimationFrame(() => {
+        successRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      setTimeout(() => setSubmitSuccess(false), 6000);
     } catch (e: any) {
-      alert(e.response?.data?.message || 'Failed to add student');
+      alert(e.friendlyMessage || e.response?.data?.message || 'Failed to add student');
     } finally {
       setSubmitting(false);
     }
@@ -1266,11 +1273,11 @@ const UserAdminDashboard = () => {
               </div>
 
               {submitSuccess && (
-                <div className="upload-result" style={{ margin: '1.5rem' }}>
+                <div ref={successRef} className="upload-result" style={{ margin: '1.5rem' }}>
                   <span className="upload-result-icon">✅</span>
                   <div className="upload-result-info">
                     <strong>Student Added Successfully!</strong>
-                    <span>The student record has been saved to the database.</span>
+                    <span>The student record has been saved. You can enter the next one below.</span>
                   </div>
                 </div>
               )}
