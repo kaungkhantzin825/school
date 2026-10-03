@@ -30,7 +30,6 @@ const RegisterPage = () => {
   const [form, setForm] = useState({
     full_name: '',
     email: '',
-    confirm_email: '',
     password: '',
     password_confirmation: '',
     organization_name: '',
@@ -53,7 +52,8 @@ const RegisterPage = () => {
 
   const set = (k: string, v: string) => {
     setForm(prev => ({ ...prev, [k]: v }));
-    if (k === 'email' || k === 'confirm_email') {
+    // Changing the email invalidates any code already sent to the old one.
+    if (k === 'email') {
       setOtpState('idle');
       setOtpInput('');
       setOtpError('');
@@ -61,15 +61,14 @@ const RegisterPage = () => {
   };
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
-  const emailsMatch = form.email.length > 0 && form.email === form.confirm_email;
-  const canSendOtp = emailValid && emailsMatch && otpState !== 'verified';
+  const canSendOtp = emailValid && otpState !== 'verified';
 
   const passwordLongEnough = form.password.length >= 8;
   const passwordsMatch = form.password.length > 0 && form.password === form.password_confirmation;
 
   const sendOtp = () => {
-    if (!emailsMatch) {
-      setError('Email and Confirm Email must match before sending code.');
+    if (!emailValid) {
+      setError('Please enter a valid email address before sending the code.');
       return;
     }
     const code = String(Math.floor(100000 + Math.random() * 900000));
@@ -97,8 +96,8 @@ const RegisterPage = () => {
     e.preventDefault();
     setError('');
 
-    if (!emailsMatch) {
-      setError('Email and Confirm Email must match.');
+    if (!emailValid) {
+      setError('Please enter a valid email address.');
       return;
     }
     if (!passwordLongEnough) {
@@ -222,21 +221,6 @@ const RegisterPage = () => {
                   placeholder=""
                   required
                 />
-              </div>
-
-              <div className="reg-field">
-                <label htmlFor="reg-confirm-email">Confirm Email</label>
-                <input
-                  id="reg-confirm-email"
-                  type="email"
-                  value={form.confirm_email}
-                  onChange={e => set('confirm_email', e.target.value)}
-                  placeholder=""
-                  required
-                />
-                {form.confirm_email.length > 0 && !emailsMatch && (
-                  <span className="reg-hint reg-hint-error">Emails do not match.</span>
-                )}
               </div>
 
               <div className="reg-field">
