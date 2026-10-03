@@ -118,6 +118,11 @@ const LoginPage = () => {
             </button>
           </form>
 
+          <p className="login-signup-hint">
+            If you don't have an account,{' '}
+            <a onClick={() => navigate('/register')}>sign up here</a>
+          </p>
+
           <div className="login-back">
             <a href="/">← Back to Home</a>
           </div>

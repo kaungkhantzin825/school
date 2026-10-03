@@ -108,6 +108,34 @@
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
+/* Password field with show/hide toggle */
+.reg-pwd-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.reg-pwd-wrap input {
+  padding-right: 2.6rem;
+}
+
+.reg-pwd-toggle {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 0.25rem;
+  opacity: 0.7;
+}
+
+.reg-pwd-toggle:hover {
+  opacity: 1;
+}
+
 .reg-hint {
   grid-column: 2 / -1;
   font-size: 0.8rem;

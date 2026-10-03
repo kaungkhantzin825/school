@@ -303,8 +303,27 @@
 }
 
 /* ── Back link ── */
-.login-back {
+.login-signup-hint {
   margin-top: 1.5rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: #334155;
+}
+
+.login-signup-hint a {
+  color: var(--primary);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.login-signup-hint a:hover {
+  opacity: 0.8;
+}
+
+.login-back {
+  margin-top: 1rem;
   text-align: center;
   font-size: 0.85rem;
   color: #64748b;

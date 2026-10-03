@@ -31,10 +31,13 @@ const RegisterPage = () => {
     full_name: '',
     email: '',
     confirm_email: '',
+    password: '',
+    password_confirmation: '',
     organization_name: '',
     organization_type: '',
     country: '',
   });
+  const [showPwd, setShowPwd] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
 
@@ -60,6 +63,9 @@ const RegisterPage = () => {
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
   const emailsMatch = form.email.length > 0 && form.email === form.confirm_email;
   const canSendOtp = emailValid && emailsMatch && otpState !== 'verified';
+
+  const passwordLongEnough = form.password.length >= 8;
+  const passwordsMatch = form.password.length > 0 && form.password === form.password_confirmation;
 
   const sendOtp = () => {
     if (!emailsMatch) {
@@ -93,6 +99,14 @@ const RegisterPage = () => {
 
     if (!emailsMatch) {
       setError('Email and Confirm Email must match.');
+      return;
+    }
+    if (!passwordLongEnough) {
+      setError('Your password must be at least 8 characters long.');
+      return;
+    }
+    if (!passwordsMatch) {
+      setError('Password and Confirm Password must match.');
       return;
     }
     if (otpState !== 'verified') {
@@ -145,8 +159,8 @@ const RegisterPage = () => {
             <h1>Registration Successful!</h1>
             <p>
               Welcome, <strong>{form.full_name}</strong>! Your verifier account for{' '}
-              <strong>{form.organization_name}</strong> is ready. We've emailed your sign-in
-              password to <strong>{form.email}</strong> so you can log back in later.
+              <strong>{form.organization_name}</strong> is ready. Sign in any time with{' '}
+              <strong>{form.email}</strong> and the password you just chose.
             </p>
             <p className="reg-redirect-notice">
               Redirecting you to your <strong>Verifier Side Dashboard</strong>...
@@ -171,7 +185,7 @@ const RegisterPage = () => {
           {/* ── Who Should Register? Banner (Image 3 & 5) ── */}
           <div className="reg-banner-wrap">
             <img
-              src="/who-should-register.jpg"
+              src="/logsss.jpg"
               alt="Who Should Register? Verification service designed for third-party organizations"
               className="reg-banner-img"
             />
@@ -222,6 +236,46 @@ const RegisterPage = () => {
                 />
                 {form.confirm_email.length > 0 && !emailsMatch && (
                   <span className="reg-hint reg-hint-error">Emails do not match.</span>
+                )}
+              </div>
+
+              <div className="reg-field">
+                <label htmlFor="reg-password">Password</label>
+                <div className="reg-pwd-wrap">
+                  <input
+                    id="reg-password"
+                    type={showPwd ? 'text' : 'password'}
+                    value={form.password}
+                    onChange={e => set('password', e.target.value)}
+                    autoComplete="new-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="reg-pwd-toggle"
+                    onClick={() => setShowPwd(!showPwd)}
+                    aria-label={showPwd ? 'Hide password' : 'Show password'}
+                  >
+                    {showPwd ? '🙈' : '👁️'}
+                  </button>
+                </div>
+                {form.password.length > 0 && !passwordLongEnough && (
+                  <span className="reg-hint reg-hint-error">Use at least 8 characters.</span>
+                )}
+              </div>
+
+              <div className="reg-field">
+                <label htmlFor="reg-password-confirm">Confirm Password</label>
+                <input
+                  id="reg-password-confirm"
+                  type={showPwd ? 'text' : 'password'}
+                  value={form.password_confirmation}
+                  onChange={e => set('password_confirmation', e.target.value)}
+                  autoComplete="new-password"
+                  required
+                />
+                {form.password_confirmation.length > 0 && !passwordsMatch && (
+                  <span className="reg-hint reg-hint-error">Passwords do not match.</span>
                 )}
               </div>
 
