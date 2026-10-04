@@ -4,6 +4,7 @@ import { universityAPI } from '../services/api';
 import '../styles/UniversityInfoPage.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { isAuthenticated } from '../utils/auth';
 
 const UniversityInfoPage = () => {
   const location   = useLocation();
@@ -86,15 +87,33 @@ const UniversityInfoPage = () => {
               <span className="info-pill">⚡ Instant Results</span>
             </div>
 
+            {!isAuthenticated() && (
+              <div className="info-login-note">
+                🔒 Verification is for registered organisations only. You'll be asked to
+                sign in so each enquiry can be recorded against your organisation.
+              </div>
+            )}
+
             <div className="info-actions">
               <button className="btn-back" onClick={() => navigate(-1)}>
                 ← Back
               </button>
               <button
                 className="btn-verify"
-                onClick={() => navigate('/verification-form', { state: { university } })}
+                onClick={() => {
+                  // Verification requires an account so every enquiry is
+                  // attributable — send unauthenticated users to sign in first
+                  // and bring them straight back to the form afterwards.
+                  if (!isAuthenticated()) {
+                    navigate('/login', {
+                      state: { redirectTo: '/verification-form', university },
+                    });
+                    return;
+                  }
+                  navigate('/verification-form', { state: { university } });
+                }}
               >
-                Verify a Credential →
+                {isAuthenticated() ? 'Verify a Credential →' : 'Sign in to Verify →'}
               </button>
             </div>
           </div>

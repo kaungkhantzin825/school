@@ -187,3 +187,15 @@
     transform: translateX(0);
   }
 }
+
+/* Explains why verification asks for a sign-in */
+.info-login-note {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+}

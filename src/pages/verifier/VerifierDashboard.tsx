@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { verificationAPI } from '../../services/api';
 import { alertSuccess, alertError, alertInfo } from '../../utils/alerts';
+import StudentPhoto from '../../components/StudentPhoto';
 import '../../styles/verifier/VerifierDashboard.css';
 
 type Tab = 'dashboard' | 'verified' | 'pending';
@@ -29,6 +30,7 @@ interface LogRow {
     degree: string;
     specialization: string;
     graduation_year: number;
+    photo_url?: string | null;
   } | null;
 }
 
@@ -287,6 +289,7 @@ const VerifierDashboard = () => {
                   <thead>
                     <tr>
                       <th className="col-no">No.</th>
+                      <th>Photo</th>
                       <th>University Name</th>
                       <th>Graduate Name</th>
                       <th>Gender</th>
@@ -300,7 +303,7 @@ const VerifierDashboard = () => {
                   <tbody>
                     {verified.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="vd-empty-cell">
+                        <td colSpan={10} className="vd-empty-cell">
                           No verified records found.
                         </td>
                       </tr>
@@ -308,6 +311,13 @@ const VerifierDashboard = () => {
                       verified.map((log, idx) => (
                         <tr key={log.id}>
                           <td className="col-no">{idx + 1}</td>
+                          <td>
+                            <StudentPhoto
+                              photoUrl={log.student?.photo_url}
+                              name={log.student?.graduate_name || log.searched_name}
+                              size={36}
+                            />
+                          </td>
                           <td className="col-uni">{log.university?.name || '—'}</td>
                           <td className="col-bold">{log.student?.graduate_name || log.searched_name}</td>
                           <td>{log.student?.gender || '—'}</td>

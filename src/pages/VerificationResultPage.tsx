@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import '../styles/VerificationResultPage.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import StudentPhoto from '../components/StudentPhoto';
 
 const VerificationResultPage = () => {
   const location  = useLocation();
@@ -105,15 +106,16 @@ const VerificationResultPage = () => {
                 {/* Graduate photo */}
                 <div className="graduate-section">
                   <div className="graduate-photo-wrap">
-                    <div className="graduate-avatar">
-                      {student?.photo_url
-                        ? <img
-                            src={student.photo_url}
-                            alt="Graduate"
-                            onError={(e) => { (e.currentTarget.style.display = 'none'); }}
-                          />
-                        : '👤'}
-                    </div>
+                    <StudentPhoto
+                      photoUrl={student?.photo_url}
+                      name={student?.graduate_name || formData?.graduateName}
+                      size={96}
+                      square
+                    />
+                  </div>
+                  <div className="graduate-caption">
+                    <strong>{student?.graduate_name || formData?.graduateName}</strong>
+                    <span>{student?.degree || formData?.degree}</span>
                   </div>
                 </div>
 

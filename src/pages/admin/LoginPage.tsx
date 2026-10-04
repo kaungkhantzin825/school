@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { authAPI } from '../../services/api';
+import { homeRouteForRole } from '../../utils/auth';
 import '../../styles/admin/LoginPage.css';
 
 const LoginPage = () => {
@@ -10,6 +11,9 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo: string | undefined = location.state?.redirectTo;
+  const university = location.state?.university;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,13 +27,12 @@ const LoginPage = () => {
       localStorage.setItem('auth_token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      // Redirect based on role
-      if (user.role === 'super_admin') {
-        navigate('/superadmin/admin');
-      } else if (user.role === 'verifier') {
-        navigate('/verifier/dashboard');
+      // If they were sent here mid-verification, continue that flow instead
+      // of dropping them on a dashboard.
+      if (redirectTo) {
+        navigate(redirectTo, { replace: true, state: { university } });
       } else {
-        navigate('/user/admin');
+        navigate(homeRouteForRole(user.role), { replace: true });
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid credentials');
@@ -54,9 +57,19 @@ const LoginPage = () => {
       <div className="login-right">
         <div className="login-form-wrap">
           <div className="login-form-header">
-            <h2>Data Entry Portal Login</h2>
-            <p>Enter your credentials to access the dashboard</p>
+            <h2>{redirectTo ? 'Sign in to Verify' : 'Data Entry Portal Login'}</h2>
+            <p>
+              {redirectTo
+                ? 'Credential checks are recorded against your organisation, so please sign in to continue.'
+                : 'Enter your credentials to access the dashboard'}
+            </p>
           </div>
+
+          {redirectTo && university?.name && (
+            <div className="login-context-note">
+              🏛️ Continuing verification for <strong>{university.name}</strong>
+            </div>
+          )}
 
           {error && (
             <div className="login-error">
@@ -120,7 +133,9 @@ const LoginPage = () => {
 
           <p className="login-signup-hint">
             If you don't have an account,{' '}
-            <a onClick={() => navigate('/register')}>sign up here</a>
+            <a onClick={() => navigate('/register', { state: { redirectTo, university } })}>
+              sign up here
+            </a>
           </p>
 
           <div className="login-back">

@@ -369,3 +369,14 @@
   .login-page { grid-template-columns: 1fr; }
   .login-left  { display: none; }
 }
+
+/* Shown when the user was sent here mid-verification */
+.login-context-note {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.85rem;
+  margin-bottom: 1.1rem;
+}

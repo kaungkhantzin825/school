@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { studentAPI, verificationAPI, degreeAPI, universityAPI } from '../../services/api';
 import '../../styles/admin/UserAdminDashboard.css';
 import { alertSuccess, alertError, alertWarning, confirmDelete } from '../../utils/alerts';
+import StudentPhoto from '../../components/StudentPhoto';
 
 type Tab = 'upload' | 'students' | 'pending_review' | 'logs' | 'degree' | 'addstudent' | 'settings';
 
@@ -38,44 +39,6 @@ const PAGE_SIZE = 10;
 
 const fmtLongDate = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
-
-/**
- * Student photo with a graceful fallback — a broken or missing photo_url
- * shows the graduate's initials rather than a broken-image icon.
- */
-const StudentAvatar = ({ student, size }: { student: Student; size: number }) => {
-  const [broken, setBroken] = useState(false);
-
-  const initials = student.graduate_name
-    ?.split(' ').filter(Boolean).map(p => p[0]).join('').toUpperCase().slice(0, 2) || '?';
-
-  const base: React.CSSProperties = {
-    width: size, height: size, borderRadius: size > 60 ? 12 : '50%',
-    objectFit: 'cover', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    flexShrink: 0, overflow: 'hidden',
-  };
-
-  if (!student.photo_url || broken) {
-    return (
-      <div style={{
-        ...base,
-        background: '#e0e7ff', color: '#4338ca',
-        fontWeight: 700, fontSize: size * 0.36,
-      }}>
-        {initials}
-      </div>
-    );
-  }
-
-  return (
-    <img
-      src={student.photo_url}
-      alt={student.graduate_name}
-      style={{ ...base, border: '1px solid #e2e8f0' }}
-      onError={() => setBroken(true)}
-    />
-  );
-};
 
 const UserAdminDashboard = () => {
   const navigate = useNavigate();
@@ -770,7 +733,7 @@ const UserAdminDashboard = () => {
                       <th>NRC Number</th>
                       <th>Degree</th>
                       <th>Year</th>
-                      <th>Action</th>
+                      <th className="ud-action-cell">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -787,7 +750,7 @@ const UserAdminDashboard = () => {
                       <tr key={s.id || i}>
                         <td>{(studentPage - 1) * PAGE_SIZE + i + 1}</td>
                         <td>
-                          <StudentAvatar student={s} size={38} />
+                          <StudentPhoto photoUrl={s.photo_url} name={s.graduate_name} size={38} />
                         </td>
                         <td className="td-name">
                           {s.graduate_name}
@@ -815,13 +778,17 @@ const UserAdminDashboard = () => {
                             {s.graduation_year}
                           </span>
                         </td>
-                        <td>
+                        <td className="ud-action-cell">
                           <button
-                            className="action-btn action-edit"
-                            style={{ whiteSpace: 'nowrap' }}
+                            className="ud-detail-btn"
                             onClick={() => setDetailStudent(s)}
+                            title={`View full record for ${s.graduate_name}`}
                           >
-                            👁️ Detail
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            <span>Detail</span>
                           </button>
                         </td>
                       </tr>
@@ -1764,7 +1731,7 @@ const UserAdminDashboard = () => {
           >
             {/* Header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', padding: '1.5rem', borderBottom: '1px solid #e2e8f0' }}>
-              <StudentAvatar student={detailStudent} size={88} />
+              <StudentPhoto photoUrl={detailStudent.photo_url} name={detailStudent.graduate_name} size={88} square />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#0f172a' }}>{detailStudent.graduate_name}</h2>
                 <div style={{ color: '#64748b', fontSize: '0.85rem', marginTop: 4 }}>

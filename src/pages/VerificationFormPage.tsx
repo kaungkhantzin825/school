@@ -4,6 +4,7 @@ import { verificationAPI, degreeAPI } from '../services/api';
 import '../styles/VerificationFormPage.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { isAuthenticated } from '../utils/auth';
 
 interface Degree {
   id: number;
@@ -34,7 +35,15 @@ const VerificationFormPage = () => {
   // navigate() while rendering warns, and an early return here would skip the
   // hooks below and break the rules of hooks on the next render.
   useEffect(() => {
-    if (!university) navigate('/', { replace: true });
+    if (!university) {
+      navigate('/', { replace: true });
+      return;
+    }
+    // Guard the page itself, not just the button that leads here — otherwise
+    // the URL could be opened directly and produce an anonymous enquiry.
+    if (!isAuthenticated()) {
+      navigate('/login', { replace: true, state: { redirectTo: '/verification-form', university } });
+    }
   }, [university, navigate]);
 
   useEffect(() => {
@@ -58,7 +67,7 @@ const VerificationFormPage = () => {
     fetchDegrees();
   }, [university]);
 
-  if (!university) return null;
+  if (!university || !isAuthenticated()) return null;
 
   const set = (field: string, value: string) =>
     setFormData(prev => ({ ...prev, [field]: value }));

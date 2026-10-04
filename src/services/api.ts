@@ -59,6 +59,36 @@ api.interceptors.response.use(
 
 export default api;
 
+/** Origin of the backend, derived from VITE_API_URL (strips the /api suffix). */
+export const API_ORIGIN = API_URL.replace(/\/api\/?$/, '');
+
+/**
+ * Turn a stored photo_url into something the browser can actually load.
+ *
+ * Photos are saved as a path relative to the backend. Older records may hold
+ * an absolute URL built from APP_URL — which breaks whenever APP_URL is left
+ * at its default (http://localhost) or the domain changes. Both cases are
+ * rewritten onto the current API origin so existing records keep working.
+ */
+export const resolvePhotoUrl = (photoUrl?: string | null): string | null => {
+  if (!photoUrl) return null;
+
+  const path = photoUrl.startsWith('http')
+    ? (() => {
+        try {
+          return new URL(photoUrl).pathname;
+        } catch {
+          return null;
+        }
+      })()
+    : photoUrl;
+
+  if (!path) return photoUrl;
+  if (!path.includes('/uploads/')) return photoUrl;
+
+  return `${API_ORIGIN}${path.startsWith('/') ? '' : '/'}${path}`;
+};
+
 // Auth API
 export const authAPI = {
   login: (email: string, password: string) =>

@@ -142,6 +142,23 @@
   flex-shrink: 0;
 }
 
+.graduate-caption {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.graduate-caption strong {
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.graduate-caption span {
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
 .graduate-avatar {
   width: 88px; height: 88px;
   border-radius: 16px;
