@@ -4,6 +4,7 @@ import '../styles/SearchPage.css';
 import { universityAPI } from '../services/api';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import UniversityLogo from '../components/UniversityLogo';
 
 interface University {
   id: number;
@@ -19,7 +20,6 @@ const SearchPage = () => {
   const [suggestions, setSuggestions]         = useState<University[]>([]);
   const [loading, setLoading]                 = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [brokenLogos, setBrokenLogos] = useState<Set<number>>(new Set());
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -101,16 +101,7 @@ const SearchPage = () => {
               <ul className="gov-suggestions">
                 {suggestions.map((uni) => (
                   <li key={uni.id} className="gov-suggestion-item" onClick={() => handleSelectUniversity(uni)}>
-                    {uni.logo_url && !brokenLogos.has(uni.id) ? (
-                      <img
-                        src={uni.logo_url}
-                        alt="Logo"
-                        className="gov-suggestion-logo"
-                        onError={() => setBrokenLogos(prev => new Set(prev).add(uni.id))}
-                      />
-                    ) : (
-                      <span className="gov-suggestion-logo-placeholder">🏛️</span>
-                    )}
+                    <UniversityLogo logoUrl={uni.logo_url} name={uni.name} size={44} />
                     <div className="gov-suggestion-info">
                       <strong>{uni.name}</strong>
                       <span>📍 {uni.location}</span>

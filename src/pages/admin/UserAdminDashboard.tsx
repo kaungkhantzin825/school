@@ -4,6 +4,7 @@ import { studentAPI, verificationAPI, degreeAPI, universityAPI } from '../../ser
 import '../../styles/admin/UserAdminDashboard.css';
 import { alertSuccess, alertError, alertWarning, confirmDelete } from '../../utils/alerts';
 import StudentPhoto from '../../components/StudentPhoto';
+import UniversityLogo from '../../components/UniversityLogo';
 
 type Tab = 'upload' | 'students' | 'pending_review' | 'logs' | 'degree' | 'addstudent' | 'settings';
 
@@ -106,6 +107,27 @@ const UserAdminDashboard = () => {
     verification_notice: user?.university?.verification_notice || '',
   });
   const [settingsSubmitting, setSettingsSubmitting] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogoPick = async (file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { alertWarning('Invalid File', 'Please choose an image file.'); return; }
+    if (file.size > 2 * 1024 * 1024) { alertWarning('Image Too Large', 'The logo must be 2 MB or smaller.'); return; }
+
+    setLogoUploading(true);
+    try {
+      const res = await universityAPI.uploadLogo(file);
+      setUniForm(p => ({ ...p, logo_url: res.data.url }));
+      alertSuccess('Logo Uploaded', 'Remember to press Save Settings to apply it.');
+    } catch (e: any) {
+      alertError('Upload Failed', e.friendlyMessage || e.response?.data?.message || 'Could not upload the logo.');
+    } finally {
+      setLogoUploading(false);
+      if (logoInputRef.current) logoInputRef.current.value = '';
+    }
+  };
+
   const [settingsSuccess, setSettingsSuccess] = useState(false);
 
   const fetchUniversity = async () => {
@@ -1576,16 +1598,56 @@ const UserAdminDashboard = () => {
                   {/* Logo URL */}
                   <div className="form-group">
                     <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
-                      Logo Image URL
+                      University Logo
                     </label>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.75rem' }}>
+                      <UniversityLogo logoUrl={uniForm.logo_url} name={uniForm.name} size={72} tile />
+                      <div>
+                        <button
+                          type="button"
+                          className="upload-browse-btn"
+                          onClick={() => logoInputRef.current?.click()}
+                          disabled={logoUploading}
+                          style={{ padding: '0.45rem 1rem', fontSize: '0.82rem' }}
+                        >
+                          {logoUploading ? '⏳ Uploading…' : '📁 Upload Logo'}
+                        </button>
+                        {uniForm.logo_url && (
+                          <button
+                            type="button"
+                            className="upload-result-clear"
+                            onClick={() => setUniForm(p => ({ ...p, logo_url: '' }))}
+                            style={{ padding: '0.45rem 1rem', fontSize: '0.82rem', marginLeft: '0.5rem' }}
+                          >
+                            ✕ Remove
+                          </button>
+                        )}
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.4rem' }}>
+                          PNG, JPG, WEBP or SVG · max 2 MB
+                        </div>
+                      </div>
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={e => handleLogoPick(e.target.files?.[0])}
+                      />
+                    </div>
+
                     <input
-                      type="url"
+                      type="text"
                       className="modal-input"
                       value={uniForm.logo_url}
                       onChange={e => setUniForm(p => ({ ...p, logo_url: e.target.value }))}
-                      placeholder="e.g. https://domain.com/logo.png"
+                      placeholder="…or paste an image URL"
                       style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
                     />
+                    <span style={{ display: 'block', marginTop: '0.25rem', fontSize: '0.75rem', color: '#94a3b8' }}>
+                      Uploading is more reliable — many image hosts (Wikipedia included) block
+                      images loaded from other websites.
+                    </span>
                   </div>
 
                   {/* Description */}

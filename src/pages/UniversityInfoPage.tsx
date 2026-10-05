@@ -5,6 +5,7 @@ import '../styles/UniversityInfoPage.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { isAuthenticated } from '../utils/auth';
+import UniversityLogo from '../components/UniversityLogo';
 
 const UniversityInfoPage = () => {
   const location   = useLocation();
@@ -12,7 +13,6 @@ const UniversityInfoPage = () => {
   const initialUniversity = location.state?.university;
 
   const [university, setUniversity] = useState<any>(initialUniversity);
-  const [logoBroken, setLogoBroken] = useState(false);
 
   useEffect(() => {
     if (!initialUniversity?.id) return;
@@ -47,17 +47,7 @@ const UniversityInfoPage = () => {
 
           {/* Banner header */}
           <div className="info-card-banner">
-            {university.logo_url && !logoBroken ? (
-              <img
-                src={university.logo_url}
-                alt="Logo"
-                className="uni-shield"
-                style={{ background: '#fff', objectFit: 'contain' }}
-                onError={() => setLogoBroken(true)}
-              />
-            ) : (
-              <div className="uni-shield">🏛️</div>
-            )}
+            <UniversityLogo logoUrl={university.logo_url} name={university.name} size={64} tile />
             <div className="uni-title-wrap">
               <h1>{university.name}</h1>
               <span className="uni-location-tag">📍 {university.location}</span>

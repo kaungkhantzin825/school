@@ -70,7 +70,7 @@ export const API_ORIGIN = API_URL.replace(/\/api\/?$/, '');
  * at its default (http://localhost) or the domain changes. Both cases are
  * rewritten onto the current API origin so existing records keep working.
  */
-export const resolvePhotoUrl = (photoUrl?: string | null): string | null => {
+export const resolveUploadUrl = (photoUrl?: string | null): string | null => {
   if (!photoUrl) return null;
 
   const path = photoUrl.startsWith('http')
@@ -126,6 +126,14 @@ export const universityAPI = {
   
   stats: () =>
     api.get('/universities/stats'),
+
+  uploadLogo: (file: File) => {
+    const form = new FormData();
+    form.append('logo', file);
+    return api.post('/universities/upload-logo', form, {
+      headers: { 'Content-Type': 'multipart/form-data', Accept: 'application/json' },
+    });
+  },
 };
 
 // Student API
@@ -227,3 +235,6 @@ export const degreeAPI = {
   delete: (id: number) =>
     api.delete(`/degrees/${id}`),
 };
+
+/** @deprecated use resolveUploadUrl */
+export const resolvePhotoUrl = resolveUploadUrl;
