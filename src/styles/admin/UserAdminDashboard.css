@@ -24,16 +24,28 @@
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
+/* Holds the real university logo — sized generously so the institution is
+   recognisable at a glance, on a light plate so dark logos stay legible
+   against the dark sidebar. */
 .ud-logo-icon {
-  width: 38px; height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #1a56db, #3b82f6);
+  width: 96px;
+  height: 96px;
+  border-radius: 14px;
+  background: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.1rem;
-  margin-bottom: 0.5rem;
-  box-shadow: 0 3px 10px rgba(26,86,219,0.4);
+  margin: 0 auto 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.ud-logo-icon > img,
+.ud-logo-icon > div {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  font-size: 1.6rem;
 }
 
 .ud-logo-uni {
@@ -745,4 +757,18 @@
   text-align: center;
   width: 1%;
   white-space: nowrap;
+}
+
+/* "Data Entry Date & Time" — date on top, clock time beneath it */
+.ud-entry-cell {
+  white-space: nowrap;
+  font-size: 0.83rem;
+  color: #334155;
+}
+
+.ud-entry-time {
+  display: block;
+  font-size: 0.74rem;
+  color: #94a3b8;
+  margin-top: 1px;
 }

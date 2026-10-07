@@ -4,6 +4,7 @@ import '../styles/VerificationResultPage.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import StudentPhoto from '../components/StudentPhoto';
+import UniversityLogo from '../components/UniversityLogo';
 
 const VerificationResultPage = () => {
   const location  = useLocation();
@@ -34,8 +35,9 @@ const VerificationResultPage = () => {
 
           {/* Banner */}
           <div className={`result-banner ${bannerCls}`}>
-            <div className="result-banner-icon">
-              {bannerIcon}
+            <div className="result-banner-logo">
+              <UniversityLogo logoUrl={university.logo_url} name={university.name} size={56} tile />
+              <span className="result-banner-status" aria-hidden="true">{bannerIcon}</span>
             </div>
             <div className="result-banner-text">
               <h2>{university.name}</h2>

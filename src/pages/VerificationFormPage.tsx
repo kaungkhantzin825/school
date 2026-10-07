@@ -5,6 +5,7 @@ import '../styles/VerificationFormPage.css';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { isAuthenticated } from '../utils/auth';
+import UniversityLogo from '../components/UniversityLogo';
 
 interface Degree {
   id: number;
@@ -123,7 +124,7 @@ const VerificationFormPage = () => {
 
           {/* Banner */}
           <div className="form-card-banner">
-            <div className="form-shield">🏛️</div>
+            <UniversityLogo logoUrl={university.logo_url} name={university.name} size={52} tile />
             <div className="form-banner-text">
               <h2>{university.name}</h2>
               <p>📍 {university.location}</p>

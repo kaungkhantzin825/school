@@ -5,6 +5,7 @@ import '../../styles/admin/UserAdminDashboard.css';
 import { alertSuccess, alertError, alertWarning, confirmDelete } from '../../utils/alerts';
 import StudentPhoto from '../../components/StudentPhoto';
 import UniversityLogo from '../../components/UniversityLogo';
+import { getStoredUser, clearSession, persistUser } from '../../utils/auth';
 
 type Tab = 'upload' | 'students' | 'pending_review' | 'logs' | 'degree' | 'addstudent' | 'settings';
 
@@ -41,15 +42,25 @@ const PAGE_SIZE = 10;
 const fmtLongDate = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
 
+/** When the record was keyed in — date on one line, clock time beneath. */
+const fmtEntryDate = (d?: string | null) => {
+  if (!d) return null;
+  const date = new Date(d);
+  if (isNaN(date.getTime())) return null;
+  return {
+    date: date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+    time: date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }),
+  };
+};
+
 const UserAdminDashboard = () => {
   const navigate = useNavigate();
   
   // Get user from localStorage
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const user = getStoredUser() || ({} as any);
   
   const logout = () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user');
+    clearSession();
     navigate('/login');
   };
 
@@ -108,6 +119,7 @@ const UserAdminDashboard = () => {
   });
   const [settingsSubmitting, setSettingsSubmitting] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [university, setUniversity] = useState<any>(user?.university || null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   const handleLogoPick = async (file?: File) => {
@@ -142,8 +154,10 @@ const UserAdminDashboard = () => {
         logo_url: data.logo_url || '',
         verification_notice: data.verification_notice || '',
       });
-      const updatedUser = { ...user, university: data };
-      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUniversity(data);
+      // Persist into whichever store the session lives in — writing straight
+      // to localStorage would lose the update for "Remember me = off" sessions.
+      persistUser({ ...user, university: data });
     } catch (e) {
       console.error('Failed to fetch university details', e);
     } finally {
@@ -294,6 +308,9 @@ const UserAdminDashboard = () => {
 
   useEffect(() => {
     fetchPendingLogs();
+    // Load the university up-front so the sidebar logo is correct on every
+    // tab, not only after visiting Settings.
+    fetchUniversity();
   }, []);
 
   useEffect(() => {
@@ -512,8 +529,14 @@ const UserAdminDashboard = () => {
       {/* ── Sidebar ── */}
       <aside className="ud-sidebar">
         <div className="ud-logo">
-          <div className="ud-logo-icon">🏛️</div>
-          <div className="ud-logo-uni">{user?.university?.name || 'University Portal'}</div>
+          <div className="ud-logo-icon">
+            <UniversityLogo
+              logoUrl={university?.logo_url}
+              name={university?.name}
+              size={96}
+            />
+          </div>
+          <div className="ud-logo-uni">{university?.name || 'University Portal'}</div>
           <div className="ud-logo-sub">Graduate Record Data Entry System</div>
         </div>
 
@@ -755,14 +778,15 @@ const UserAdminDashboard = () => {
                       <th>NRC Number</th>
                       <th>Degree</th>
                       <th>Year</th>
+                      <th>Data Entry Date &amp; Time</th>
                       <th className="ud-action-cell">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
-                      <tr><td colSpan={9} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Loading students...</td></tr>
+                      <tr><td colSpan={10} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Loading students...</td></tr>
                     ) : stuPaged.length === 0 ? (
-                      <tr><td colSpan={9}>
+                      <tr><td colSpan={10}>
                         <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem', color: '#94a3b8', textAlign: 'center' }}>
                           <span style={{ fontSize: '3rem' }}>👨‍🎓</span>
                           <p>No students found. {studentSearch ? 'Try a different search.' : 'Upload a CSV to get started.'}</p>
@@ -799,6 +823,18 @@ const UserAdminDashboard = () => {
                           <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: '100px', fontSize: '0.78rem', fontWeight: 600 }}>
                             {s.graduation_year}
                           </span>
+                        </td>
+                        <td className="ud-entry-cell">
+                          {(() => {
+                            const entered = fmtEntryDate(s.created_at);
+                            if (!entered) return <span style={{ color: '#cbd5e1' }}>—</span>;
+                            return (
+                              <>
+                                {entered.date}
+                                <span className="ud-entry-time">{entered.time}</span>
+                              </>
+                            );
+                          })()}
                         </td>
                         <td className="ud-action-cell">
                           <button
@@ -1823,7 +1859,7 @@ const UserAdminDashboard = () => {
                 ['Graduate Reg. Number', detailStudent.student_id || '—'],
                 ['Graduation Year', String(detailStudent.graduation_year ?? '—')],
                 ['University', detailStudent.university?.name || user?.university?.name || '—'],
-                ['Record Added', fmtLongDate(detailStudent.created_at)],
+                ['Data Entry Date & Time', (() => { const e = fmtEntryDate(detailStudent.created_at); return e ? `${e.date}, ${e.time}` : '—'; })()],
               ] as [string, string][]).map(([label, value]) => (
                 <div key={label}>
                   <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em', color: '#94a3b8', fontWeight: 600, marginBottom: 4 }}>

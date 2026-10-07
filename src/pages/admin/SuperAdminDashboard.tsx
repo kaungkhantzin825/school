@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { universityAPI, userAPI, verificationAPI, registrationAPI } from '../../services/api';
 import '../../styles/admin/SuperAdminDashboard.css';
 import { alertSuccess, alertError, confirmDelete, confirmAction } from '../../utils/alerts';
+import { getStoredUser, clearSession } from '../../utils/auth';
 
 type Tab = 'dashboard' | 'universities' | 'users' | 'registrations' | 'analytics' | 'settings';
 
@@ -26,11 +27,10 @@ const SuperAdminDashboard = () => {
   const navigate = useNavigate();
   
   // Get user from localStorage
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const user = getStoredUser() || ({} as any);
   
   const logout = () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user');
+    clearSession();
     navigate('/login');
   };
 

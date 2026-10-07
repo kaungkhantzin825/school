@@ -48,6 +48,30 @@
   flex-shrink: 0;
 }
 
+/* University logo in the banner, with the outcome shown as a small badge
+   on the corner so the status is still obvious at a glance. */
+.result-banner-logo {
+  position: relative;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
+.result-banner-status {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+}
+
 .result-banner.success-banner .result-banner-icon {
   background: rgba(16,185,129,0.3);
 }

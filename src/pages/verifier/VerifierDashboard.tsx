@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { verificationAPI } from '../../services/api';
 import { alertSuccess, alertError, alertInfo } from '../../utils/alerts';
 import StudentPhoto from '../../components/StudentPhoto';
+import { getStoredUser, getToken, clearSession } from '../../utils/auth';
 import '../../styles/verifier/VerifierDashboard.css';
 
 type Tab = 'dashboard' | 'verified' | 'pending';
@@ -64,20 +65,14 @@ const slaStatus = (log: LogRow) => {
   return { label: `In Process - ⏱ ${daysLeft} days left`, cls: 'sla-text-process' };
 };
 
-const readStoredUser = () => {
-  try {
-    return JSON.parse(localStorage.getItem('user') || '{}');
-  } catch {
-    return {};
-  }
-};
+const readStoredUser = () => getStoredUser() || ({} as any);
 
 const VerifierDashboard = () => {
   const navigate = useNavigate();
   const [user] = useState(readStoredUser);
 
   useEffect(() => {
-    if (!localStorage.getItem('auth_token') || user?.role !== 'verifier') {
+    if (!getToken() || user?.role !== 'verifier') {
       navigate('/login');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -148,8 +143,7 @@ const VerifierDashboard = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user');
+    clearSession();
     navigate('/login');
   };
 

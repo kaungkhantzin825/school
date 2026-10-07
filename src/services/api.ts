@@ -12,7 +12,8 @@ const api = axios.create({
 
 // Add token to requests if available
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('auth_token');
+  // "Remember me" decides which store holds the session — check both.
+  const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -28,9 +29,11 @@ api.interceptors.response.use(
     // Session expired / revoked — clear it and send the user to sign in again,
     // but only if they were actually signed in (avoids bouncing public pages).
     if (status === 401) {
-      const wasAuthed = !!localStorage.getItem('auth_token');
+      const wasAuthed = !!(localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token'));
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
+      sessionStorage.removeItem('auth_token');
+      sessionStorage.removeItem('user');
       if (wasAuthed && !window.location.pathname.startsWith('/login')) {
         window.location.href = '/login';
       }

@@ -1,0 +1,394 @@
+/* ──────────────────────────────────────────────────────────────
+   Shared layout for the Login and Register pages: one centred
+   card on a soft page background, ACVR mark at the top.
+   ────────────────────────────────────────────────────────────── */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f7f9fb;
+  padding: 2.5rem 1rem 3.5rem;
+  font-family: inherit;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: #eef2f6;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 2rem 2.25rem 2.25rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+/* Register needs more room for the organisation fields */
+.auth-card.auth-card-wide {
+  max-width: 620px;
+}
+
+.auth-logo {
+  display: block;
+  margin: 0 auto 1.75rem;
+  max-height: 74px;
+  width: auto;
+}
+
+/* Blue-grey context strip ("Continuing the verification process for …") */
+.auth-context {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: #d8e6e8;
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.6rem;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: #15506b;
+}
+
+.auth-context svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  opacity: 0.75;
+}
+
+.auth-title {
+  font-size: 1.12rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1.1rem;
+}
+
+.auth-subtitle {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: -0.7rem 0 1.3rem;
+  line-height: 1.5;
+}
+
+.auth-section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 1.5rem 0 0.7rem;
+}
+
+/* ── Inputs with a leading icon ── */
+.auth-field {
+  position: relative;
+  margin-bottom: 0.7rem;
+}
+
+.auth-field > input,
+.auth-field > select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.72rem 0.9rem 0.72rem 2.5rem;
+  border: 1px solid #dbe2ea;
+  border-radius: 5px;
+  background: #fff;
+  font-size: 0.88rem;
+  font-family: inherit;
+  color: #1e293b;
+}
+
+/* Fields without an icon (register) keep normal padding */
+.auth-field.no-icon > input,
+.auth-field.no-icon > select,
+.auth-field.no-icon > textarea {
+  padding-left: 0.9rem;
+}
+
+.auth-field > input::placeholder {
+  color: #9aa7b5;
+}
+
+.auth-field > input:focus,
+.auth-field > select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.auth-field-icon {
+  position: absolute;
+  left: 0.82rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  display: flex;
+  pointer-events: none;
+}
+
+.auth-field-toggle {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94a3b8;
+  padding: 0.25rem;
+  display: flex;
+}
+
+.auth-field-toggle:hover {
+  color: #475569;
+}
+
+.auth-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 0.3rem;
+}
+
+/* ── Remember me ── */
+.auth-remember {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  color: #475569;
+  margin: 0.3rem 0 1.25rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.auth-remember input {
+  width: 14px;
+  height: 14px;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+/* ── Amber primary action ── */
+.auth-submit {
+  display: block;
+  margin: 0 auto;
+  min-width: 150px;
+  padding: 0.62rem 1.9rem;
+  border: none;
+  border-radius: 5px;
+  background: #eda02c;
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+}
+
+.auth-submit:hover:not(:disabled) {
+  background: #d98f1d;
+  box-shadow: 0 4px 12px rgba(237, 160, 44, 0.32);
+  transform: translateY(-1px);
+}
+
+.auth-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Footer links ── */
+.auth-footnote {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 1rem 0 0;
+}
+
+.auth-footnote a,
+.auth-backlink {
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.auth-backlink {
+  display: block;
+  text-align: center;
+  font-size: 0.8rem;
+  margin-top: 0.45rem;
+}
+
+.auth-error {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  border-radius: 6px;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.83rem;
+  margin-bottom: 1rem;
+}
+
+.auth-hint {
+  display: block;
+  font-size: 0.76rem;
+  color: #64748b;
+  margin-top: 0.2rem;
+}
+
+.auth-hint-error {
+  color: #dc2626;
+}
+
+/* ── Register-specific ── */
+.auth-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1rem;
+}
+
+.auth-otp {
+  background: #fff;
+  border: 1px solid #dbe2ea;
+  border-radius: 6px;
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.auth-otp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.auth-otp-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.auth-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b91c1c;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.auth-badge.ok {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.auth-otp-demo {
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #92400e;
+  border-radius: 5px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.78rem;
+  margin: 0 0 0.6rem;
+}
+
+.auth-otp-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.auth-otp-row input {
+  width: 130px;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid #dbe2ea;
+  border-radius: 5px;
+  font-size: 0.9rem;
+  letter-spacing: 3px;
+  font-family: inherit;
+}
+
+.auth-btn-sm {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 5px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.auth-btn-sm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.auth-link-btn {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.auth-terms {
+  background: #e0ecf7;
+  border: 1px solid #c7ddf0;
+  border-radius: 6px;
+  padding: 0.95rem 1.1rem;
+  margin: 1.4rem 0 1.3rem;
+  font-size: 0.82rem;
+  color: #1e3a5f;
+  line-height: 1.5;
+}
+
+.auth-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+  cursor: pointer;
+}
+
+.auth-check input {
+  margin-top: 2px;
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+/* ── Success panel ── */
+.auth-success {
+  text-align: center;
+}
+
+.auth-success-icon {
+  font-size: 2.6rem;
+}
+
+.auth-success h1 {
+  font-size: 1.25rem;
+  color: #15803d;
+  margin: 0.6rem 0 0.7rem;
+}
+
+.auth-success p {
+  font-size: 0.87rem;
+  color: #475569;
+  line-height: 1.6;
+  margin: 0 0 0.6rem;
+}
+
+@media (max-width: 560px) {
+  .auth-card { padding: 1.5rem 1.25rem 1.75rem; }
+  .auth-grid { grid-template-columns: 1fr; }
+}
