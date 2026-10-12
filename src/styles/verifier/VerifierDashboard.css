@@ -285,18 +285,26 @@
 }
 
 /* Marks a request raised by uploading a certificate instead of typing the
-   degree — there is no searchable degree text to show in that column. */
+   degree. Rendered as a link so the scan can be opened. */
 .vd-doc-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   background: #eef2ff;
   color: #3730a3;
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 100px;
   font-size: 0.74rem;
   font-weight: 600;
   white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.vd-doc-chip:hover {
+  background: #dfe5ff;
+  text-decoration: underline;
 }
 
 /* ── PENDING REQUESTS TABLE (Image 2 Mockup) ── */

@@ -509,18 +509,26 @@
 }
 
 /* Marks a request raised by uploading a certificate rather than by typing
-   the details — the registrar must open the scan to see the degree. */
+   the details. Rendered as a link so the registrar can open the scan. */
 .ud-doc-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   background: #eef2ff;
   color: #3730a3;
-  padding: 3px 9px;
+  padding: 4px 10px;
   border-radius: 100px;
   font-size: 0.74rem;
   font-weight: 600;
   white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.ud-doc-chip:hover {
+  background: #dfe5ff;
+  text-decoration: underline;
 }
 
 .ud-doc-link {

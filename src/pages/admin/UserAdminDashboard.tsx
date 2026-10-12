@@ -998,10 +998,19 @@ const UserAdminDashboard = () => {
                               </td>
                               <td>{l.searched_father_name || '—'}</td>
                               <td>
-                                {l.searched_degree || (
-                                  <span className="ud-doc-chip">
-                                    <span aria-hidden="true">📎</span> Certificate attached
-                                  </span>
+                                {l.searched_degree
+                                  ? l.searched_degree
+                                  : (!l.document_url && <span style={{ color: '#94a3b8' }}>—</span>)}
+                                {l.document_url && (
+                                  <a
+                                    className="ud-doc-chip"
+                                    href={resolveUploadUrl(l.document_url) || '#'}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title={`Open ${l.document_name || 'the uploaded certificate'} in a new tab`}
+                                  >
+                                    <span aria-hidden="true">📎</span> Open certificate
+                                  </a>
                                 )}
                               </td>
                               <td>

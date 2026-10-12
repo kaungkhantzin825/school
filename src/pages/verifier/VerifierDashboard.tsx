@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { verificationAPI } from '../../services/api';
+import { verificationAPI, resolveUploadUrl } from '../../services/api';
 import { alertSuccess, alertError, alertInfo } from '../../utils/alerts';
 import StudentPhoto from '../../components/StudentPhoto';
 import { getStoredUser, getToken, clearSession } from '../../utils/auth';
@@ -407,10 +407,19 @@ const VerifierDashboard = () => {
                             <td className="col-ref">{displayRef}</td>
                             <td className="col-bold">{log.searched_name}</td>
                             <td>
-                              {log.searched_degree || (
-                                <span className="vd-doc-chip">
-                                  <span aria-hidden="true">📎</span> Certificate attached
-                                </span>
+                              {log.searched_degree
+                                ? log.searched_degree
+                                : (!log.document_url && <span style={{ color: '#94a3b8' }}>—</span>)}
+                              {log.document_url && (
+                                <a
+                                  className="vd-doc-chip"
+                                  href={resolveUploadUrl(log.document_url) || '#'}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title={`Open ${log.document_name || 'the uploaded certificate'} in a new tab`}
+                                >
+                                  <span aria-hidden="true">📎</span> Open certificate
+                                </a>
                               )}
                             </td>
                             <td><DateTimeCell value={log.created_at} /></td>
