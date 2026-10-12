@@ -174,6 +174,23 @@ export const studentAPI = {
 export const verificationAPI = {
   verify: (data: any) =>
     api.post('/verify', data),
+
+  /**
+   * Raise a verification request by uploading the certificate itself — the
+   * path for older Myanmar-language degrees that can't be keyed into the
+   * typed search form. Always comes back as `pending` for registrar review.
+   */
+  submitWithDocument: (universityId: number, file: File, notes?: string) => {
+    const form = new FormData();
+    form.append('document', file);
+    form.append('university_id', String(universityId));
+    if (notes) form.append('notes', notes);
+    // Accept must stay explicit: without it the server can't tell this is an
+    // API call and answers auth failures with a redirect instead of JSON.
+    return api.post('/verify/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data', Accept: 'application/json' },
+    });
+  },
   
   getLogs: (params?: any) =>
     api.get('/verification-logs', { params }),
@@ -184,7 +201,21 @@ export const verificationAPI = {
   recheck: (logId: number) =>
     api.post(`/verification-logs/${logId}/recheck`),
 
-  resolveLog: (logId: number, data: { action: 'approve' | 'reject'; notes?: string; archive_ref?: string; student_id?: string; nrc_number?: string; date_of_birth?: string; gender?: string }) =>
+  resolveLog: (logId: number, data: {
+    action: 'approve' | 'reject';
+    notes?: string;
+    archive_ref?: string;
+    student_id?: string;
+    nrc_number?: string;
+    date_of_birth?: string;
+    gender?: string;
+    // Required only when the request was raised by uploading a certificate,
+    // which carries no graduate details of its own.
+    graduate_name?: string;
+    father_name?: string;
+    degree?: string;
+    graduation_year?: number;
+  }) =>
     api.post(`/verification-logs/${logId}/resolve`, data),
 };
 

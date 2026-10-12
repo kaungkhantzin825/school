@@ -343,6 +343,21 @@
 .td-name   { font-weight: 600; color: #0f172a; }
 .td-mono   { font-family: monospace; font-size: 0.82rem; }
 
+/* Additional Notes column — clamp to 3 lines so one long enquiry cannot
+   stretch the row; the full text stays available via the cell's title
+   attribute and in the review modal. */
+.td-notes {
+  min-width: 180px;
+  max-width: 260px;
+  line-height: 1.45;
+}
+.td-notes > span {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .gender-pill {
   display: inline-flex; align-items: center; gap: 4px;
   padding: 2px 8px; border-radius: 100px;
@@ -493,6 +508,46 @@
   font-weight: 600;
 }
 
+/* Marks a request raised by uploading a certificate rather than by typing
+   the details — the registrar must open the scan to see the degree. */
+.ud-doc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 3px 9px;
+  border-radius: 100px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ud-doc-link {
+  color: #1d4ed8;
+  font-weight: 600;
+  text-decoration: none;
+  word-break: break-all;
+  text-align: right;
+}
+
+.ud-doc-link:hover {
+  text-decoration: underline;
+}
+
+/* Callout inside the review modal when the request came in as an upload and
+   the registrar has to key the graduate's details in from the document. */
+.ud-doc-notice {
+  background: #eef2ff;
+  border-left: 3px solid #4f46e5;
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  color: #3730a3;
+  line-height: 1.55;
+}
+
 .ud-btn-approve {
   background: #16a34a;
   color: #ffffff;
@@ -613,6 +668,19 @@
 
 .ud-val {
   color: #1e293b;
+}
+
+/* A multi-line note needs to stack under its label rather than sit
+   beside it — the default row is space-between + centre-aligned. */
+.ud-candidate-note {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+.ud-candidate-note .ud-val {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
 }
 
 .ud-form-group {

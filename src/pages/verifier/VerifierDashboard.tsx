@@ -19,6 +19,9 @@ interface LogRow {
   status: string;
   created_at: string;
   sla_due_at: string | null;
+  /** Set when the request was raised by uploading a certificate scan. */
+  document_url?: string | null;
+  document_name?: string | null;
   university?: { name: string };
   student?: {
     id: number;
@@ -40,6 +43,32 @@ const fmtDate = (d?: string) => {
   const date = new Date(d);
   if (isNaN(date.getTime())) return d;
   return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+/**
+ * Date on one line, clock time beneath — mirrors the "Data Entry Date & Time"
+ * presentation on the University Admin panel.
+ */
+const fmtDateTime = (d?: string | null) => {
+  if (!d) return null;
+  const date = new Date(d);
+  if (isNaN(date.getTime())) return null;
+  return {
+    date: date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+    time: date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: true }),
+  };
+};
+
+/** Stacked date / time cell, shared by the Verified and Pending tables. */
+const DateTimeCell = ({ value }: { value?: string | null }) => {
+  const dt = fmtDateTime(value);
+  if (!dt) return <span className="vd-dt-empty">—</span>;
+  return (
+    <>
+      <div className="vd-dt-date">{dt.date}</div>
+      <div className="vd-dt-time">{dt.time}</div>
+    </>
+  );
 };
 
 const formatDegree = (log: LogRow) => {
@@ -292,12 +321,13 @@ const VerifierDashboard = () => {
                       <th>NRC Number</th>
                       <th>Degree / Specialization</th>
                       <th className="col-center">Graduation Year</th>
+                      <th className="col-center">Date &amp; Time</th>
                     </tr>
                   </thead>
                   <tbody>
                     {verified.length === 0 ? (
                       <tr>
-                        <td colSpan={10} className="vd-empty-cell">
+                        <td colSpan={11} className="vd-empty-cell">
                           No verified records found.
                         </td>
                       </tr>
@@ -323,6 +353,9 @@ const VerifierDashboard = () => {
                           <td>{formatDegree(log)}</td>
                           <td className="col-center col-year">
                             {log.student?.graduation_year || log.searched_year}
+                          </td>
+                          <td className="col-center col-datetime">
+                            <DateTimeCell value={log.created_at} />
                           </td>
                         </tr>
                       ))
@@ -373,8 +406,14 @@ const VerifierDashboard = () => {
                             <td className="col-no">{idx + 1}</td>
                             <td className="col-ref">{displayRef}</td>
                             <td className="col-bold">{log.searched_name}</td>
-                            <td>{log.searched_degree}</td>
-                            <td>{fmtDate(log.created_at)}</td>
+                            <td>
+                              {log.searched_degree || (
+                                <span className="vd-doc-chip">
+                                  <span aria-hidden="true">📎</span> Certificate attached
+                                </span>
+                              )}
+                            </td>
+                            <td><DateTimeCell value={log.created_at} /></td>
                             <td>
                               <span className={`vd-sla-text ${sla.cls}`}>{sla.label}</span>
                             </td>

@@ -330,6 +330,23 @@
   font-size: 0.85rem;
 }
 
+/* The certificate the verifier just attached, echoed back so they can see
+   exactly which file the registrar will open. */
+.pending-doc {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+  padding: 0.45rem 1rem;
+  background: #eef2ff;
+  color: #3730a3;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  word-break: break-all;
+  text-align: left;
+}
+
 .contact-email {
   display: inline-block;
   margin-top: 1rem;

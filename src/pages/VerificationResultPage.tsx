@@ -9,7 +9,7 @@ import UniversityLogo from '../components/UniversityLogo';
 const VerificationResultPage = () => {
   const location  = useLocation();
   const navigate  = useNavigate();
-  const { university, formData, isValid, isPending, student, requestRef, slaDueAt } = location.state || {};
+  const { university, formData, isValid, isPending, student, requestRef, slaDueAt, isDocumentSubmission, documentName } = location.state || {};
 
   useEffect(() => {
     if (!university) navigate('/', { replace: true });
@@ -72,12 +72,30 @@ const VerificationResultPage = () => {
               /* Pending manual review */
               <div className="pending-hero">
                 <div className="pending-seal">🕐</div>
-                <h3>Manual Verification In Progress</h3>
-                <p>
-                  <strong>{formData?.graduateName}</strong>'s record falls outside the instant-lookup
-                  window, so it has been queued for manual review by <strong>{university.name}</strong>'s
-                  registrar team.
-                </p>
+                <h3>
+                  {isDocumentSubmission
+                    ? 'Verification Request Received'
+                    : 'Manual Verification In Progress'}
+                </h3>
+                {isDocumentSubmission ? (
+                  <p>
+                    Your uploaded certificate has been sent to <strong>{university.name}</strong>'s
+                    registrar team, who will read it against the university archive and confirm
+                    the credential.
+                  </p>
+                ) : (
+                  <p>
+                    <strong>{formData?.graduateName}</strong>'s record falls outside the instant-lookup
+                    window, so it has been queued for manual review by <strong>{university.name}</strong>'s
+                    registrar team.
+                  </p>
+                )}
+                {isDocumentSubmission && documentName && (
+                  <div className="pending-doc">
+                    <span aria-hidden="true">📎</span>
+                    <span>{documentName}</span>
+                  </div>
+                )}
                 {requestRef && (
                   <div className="pending-ref">
                     Request ID <strong>{requestRef}</strong>

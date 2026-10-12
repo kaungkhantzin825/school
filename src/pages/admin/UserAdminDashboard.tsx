@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { studentAPI, verificationAPI, degreeAPI, universityAPI } from '../../services/api';
+import { studentAPI, verificationAPI, degreeAPI, universityAPI, resolveUploadUrl } from '../../services/api';
 import '../../styles/admin/UserAdminDashboard.css';
 import { alertSuccess, alertError, alertWarning, confirmDelete } from '../../utils/alerts';
 import StudentPhoto from '../../components/StudentPhoto';
@@ -35,6 +35,8 @@ interface Log {
   searched_degree: string;
   result: string;
   status: string;
+  /** Free-text note the verifier typed on the enquiry ("Additional Notes"). */
+  notes?: string | null;
 }
 
 const PAGE_SIZE = 10;
@@ -101,6 +103,12 @@ const UserAdminDashboard = () => {
   const [regNrc,           setRegNrc]           = useState('');
   const [regStudentId,     setRegStudentId]     = useState('');
   const [regDob,           setRegDob]           = useState('');
+  // Only used for requests raised by uploading a certificate — those carry no
+  // graduate details, so the registrar keys them in from the document.
+  const [regGradName,      setRegGradName]      = useState('');
+  const [regFatherName,    setRegFatherName]    = useState('');
+  const [regDegree,        setRegDegree]        = useState('');
+  const [regYear,          setRegYear]          = useState('');
   const [resolving,        setResolving]        = useState(false);
   const [resolveSuccess,   setResolveSuccess]   = useState<string | null>(null);
 
@@ -359,6 +367,15 @@ const UserAdminDashboard = () => {
     setRegNrc(log.student?.nrc_number || '');
     setRegStudentId(log.student?.student_id || '');
     setRegDob(log.student?.date_of_birth ? String(log.student.date_of_birth).slice(0, 10) : '');
+
+    // An upload-raised request has no graduate details on file — its
+    // searched_name is just the uploaded file's name, which is not a person.
+    // Leave these blank so the registrar reads them off the certificate.
+    const fromDocument = !!log.document_url;
+    setRegGradName(fromDocument ? '' : (log.searched_name || ''));
+    setRegFatherName(fromDocument ? '' : (log.searched_father_name || ''));
+    setRegDegree(fromDocument ? '' : (log.searched_degree || ''));
+    setRegYear(fromDocument ? '' : (log.searched_year ? String(log.searched_year) : ''));
   };
 
   const handleResolveSubmit = async (e: React.FormEvent) => {
@@ -374,6 +391,10 @@ const UserAdminDashboard = () => {
         nrc_number: regNrc || undefined,
         date_of_birth: regDob || undefined,
         gender: regGender || undefined,
+        graduate_name: regGradName || undefined,
+        father_name: regFatherName || undefined,
+        degree: regDegree || undefined,
+        graduation_year: regYear ? parseInt(regYear, 10) : undefined,
       });
 
       setResolveSuccess(
@@ -926,7 +947,7 @@ const UserAdminDashboard = () => {
                     <div className="filter-search">
                       <span>🔍</span>
                       <input
-                        placeholder="Search candidate name or Request ID..."
+                        placeholder="Search candidate name, Request ID or notes..."
                         value={pendingSearch}
                         onChange={e => setPendingSearch(e.target.value)}
                       />
@@ -947,6 +968,7 @@ const UserAdminDashboard = () => {
                         <th>Requested By</th>
                         <th>Date Submitted</th>
                         <th>SLA Due</th>
+                        <th>Additional Notes</th>
                         <th style={{ textAlign: 'center' }}>Actions</th>
                       </tr>
                     </thead>
@@ -959,7 +981,8 @@ const UserAdminDashboard = () => {
                             (l.searched_name || '').toLowerCase().includes(q) ||
                             (l.request_ref || '').toLowerCase().includes(q) ||
                             (l.searched_degree || '').toLowerCase().includes(q) ||
-                            (l.organization_name || '').toLowerCase().includes(q)
+                            (l.organization_name || '').toLowerCase().includes(q) ||
+                            (l.notes || '').toLowerCase().includes(q)
                           );
                         })
                         .map((l, i) => {
@@ -974,11 +997,19 @@ const UserAdminDashboard = () => {
                                 {l.searched_name}
                               </td>
                               <td>{l.searched_father_name || '—'}</td>
-                              <td>{l.searched_degree}</td>
                               <td>
-                                <span className="ud-pill-blue">
-                                  {l.searched_year}
-                                </span>
+                                {l.searched_degree || (
+                                  <span className="ud-doc-chip">
+                                    <span aria-hidden="true">📎</span> Certificate attached
+                                  </span>
+                                )}
+                              </td>
+                              <td>
+                                {l.searched_year ? (
+                                  <span className="ud-pill-blue">{l.searched_year}</span>
+                                ) : (
+                                  <span style={{ color: '#94a3b8' }}>—</span>
+                                )}
                               </td>
                               <td>
                                 <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{l.organization_name || l.verifier_name}</div>
@@ -992,6 +1023,13 @@ const UserAdminDashboard = () => {
                                   </span>
                                 ) : (
                                   <span style={{ color: '#2e7d32', fontWeight: 600, fontSize: '0.82rem' }}>Normal</span>
+                                )}
+                              </td>
+                              <td className="td-notes">
+                                {l.notes ? (
+                                  <span title={l.notes}>{l.notes}</span>
+                                ) : (
+                                  <span style={{ color: '#94a3b8' }}>—</span>
                                 )}
                               </td>
                               <td style={{ textAlign: 'center' }}>
@@ -1017,7 +1055,7 @@ const UserAdminDashboard = () => {
                         })}
                       {pendingLogs.length === 0 && (
                         <tr>
-                          <td colSpan={10}>
+                          <td colSpan={11}>
                             <div className="empty-state" style={{ padding: '3.5rem 1rem', textAlign: 'center', color: '#64748b' }}>
                               <span style={{ fontSize: '3rem' }}>🎉</span>
                               <h3 style={{ margin: '0.5rem 0', color: '#1e293b' }}>Queue is completely clear!</h3>
@@ -1061,12 +1099,36 @@ const UserAdminDashboard = () => {
                         </div>
                         <div className="ud-candidate-row">
                           <span className="ud-lbl">Degree / Year:</span>
-                          <span className="ud-val">{reviewModalLog.searched_degree} ({reviewModalLog.searched_year})</span>
+                          <span className="ud-val">
+                            {reviewModalLog.searched_degree
+                              ? `${reviewModalLog.searched_degree}${reviewModalLog.searched_year ? ` (${reviewModalLog.searched_year})` : ''}`
+                              : '—'}
+                          </span>
                         </div>
                         <div className="ud-candidate-row">
                           <span className="ud-lbl">Verifier:</span>
                           <span className="ud-val">{reviewModalLog.organization_name} ({reviewModalLog.verifier_email})</span>
                         </div>
+                        {reviewModalLog.document_url && (
+                          <div className="ud-candidate-row">
+                            <span className="ud-lbl">Certificate:</span>
+                            <a
+                              className="ud-doc-link"
+                              href={resolveUploadUrl(reviewModalLog.document_url) || '#'}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <span aria-hidden="true">📎</span>{' '}
+                              {reviewModalLog.document_name || 'Open document'} ↗
+                            </a>
+                          </div>
+                        )}
+                        {reviewModalLog.notes && (
+                          <div className="ud-candidate-row ud-candidate-note">
+                            <span className="ud-lbl">Additional Notes:</span>
+                            <span className="ud-val">{reviewModalLog.notes}</span>
+                          </div>
+                        )}
                       </div>
 
                       {reviewAction === 'approve' ? (
@@ -1087,6 +1149,66 @@ const UserAdminDashboard = () => {
                             ⚠️ Enter the graduate's real details exactly as they appear in the archive
                             ledger — these are stored as the official verified record.
                           </div>
+
+                          {/* An upload-raised request has no graduate details on file, so
+                              the registrar supplies them from the certificate itself. */}
+                          {reviewModalLog.document_url && (
+                            <>
+                              <div className="ud-doc-notice">
+                                📎 This request came in as an uploaded certificate, so no graduate
+                                details are on file. Read them off the document and enter them here
+                                — they become the official verified record.
+                              </div>
+
+                              <div className="ud-form-row">
+                                <div className="ud-form-group">
+                                  <label>Graduate's Full Name *</label>
+                                  <input
+                                    type="text"
+                                    value={regGradName}
+                                    onChange={e => setRegGradName(e.target.value)}
+                                    placeholder="e.g. Maung Maung"
+                                    required
+                                  />
+                                </div>
+                                <div className="ud-form-group">
+                                  <label>Father's Name *</label>
+                                  <input
+                                    type="text"
+                                    value={regFatherName}
+                                    onChange={e => setRegFatherName(e.target.value)}
+                                    placeholder="e.g. U Kaung"
+                                    required
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="ud-form-row">
+                                <div className="ud-form-group">
+                                  <label>Degree / Programme *</label>
+                                  <input
+                                    type="text"
+                                    value={regDegree}
+                                    onChange={e => setRegDegree(e.target.value)}
+                                    placeholder="e.g. MBBS"
+                                    required
+                                  />
+                                </div>
+                                <div className="ud-form-group">
+                                  <label>Graduation Year *</label>
+                                  <input
+                                    type="number"
+                                    value={regYear}
+                                    onChange={e => setRegYear(e.target.value)}
+                                    min="1900"
+                                    max={new Date().getFullYear() + 10}
+                                    placeholder="e.g. 1998"
+                                    required
+                                  />
+                                </div>
+                              </div>
+                            </>
+                          )}
 
                           <div className="ud-form-row">
                             <div className="ud-form-group">
