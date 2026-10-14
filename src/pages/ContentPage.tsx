@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import '../styles/ContentPage.css';
@@ -16,10 +15,8 @@ type Block =
   | { kind: 'kv'; items: { label: string; text: string }[] };
 
 interface Section {
-  /** Present on clause-numbered documents; the tile then shows the number. */
+  /** Clause number — rendered inline as "1." for numbered documents. */
   num?: string;
-  /** Used for the tile when the section is not numbered. */
-  icon?: string;
   title: string;
   intro?: string;
   blocks?: Block[];
@@ -29,9 +26,7 @@ interface Doc {
   key: 'about' | 'terms' | 'privacy';
   title: string;
   lead: string;
-  /** Short badges under the hero lead. */
-  chips: string[];
-  audiences?: { icon: string; title: string; text: string }[];
+  audiences?: { title: string; text: string }[];
   sections: Section[];
 }
 
@@ -44,31 +39,22 @@ const ABOUT: Doc = {
   title: 'About ACVR',
   lead:
     'The Academic Credential Verification Registry (ACVR) is an official and trusted digital authentication platform designed to streamline the verification of academic qualifications.',
-  chips: [
-    '🏛 Ministry of Cooperatives and Rural Development',
-    '🔒 Encrypted in transit and at rest',
-    '✅ Official degree authentication',
-  ],
   audiences: [
     {
-      icon: '🎓',
       title: 'Students',
       text: 'Individual graduates holding degrees, diplomas, transcripts or certificates issued by accredited national institutions.',
     },
     {
-      icon: '🏢',
       title: 'Companies / Employers',
       text: 'Verifying organizations running employment checks, professional credential reviews and institutional compliance.',
     },
     {
-      icon: '🏛️',
       title: 'Universities',
       text: 'Institutional administrators who issue, manage and maintain verified graduate records in the registry.',
     },
   ],
   sections: [
     {
-      icon: '🗄️',
       title: 'A secure central repository',
       blocks: [
         {
@@ -79,7 +65,6 @@ const ABOUT: Doc = {
       ],
     },
     {
-      icon: '✅',
       title: 'Verification you can rely on',
       blocks: [
         {
@@ -90,7 +75,6 @@ const ABOUT: Doc = {
       ],
     },
     {
-      icon: '🌐',
       title: 'Your trusted gateway',
       blocks: [
         {
@@ -112,7 +96,6 @@ const TERMS: Doc = {
   title: 'Terms of Use',
   lead:
     'Welcome to The ACVR (Academic Credential Verification and Registry). By accessing or using this website, you agree to comply with and be bound by the following Terms of Use. If you disagree with any part of these terms, you must not use our services.',
-  chips: ['⚖️ Official degree authentication only', '🚫 No commercialization of records'],
   sections: [
     {
       num: '1',
@@ -195,7 +178,6 @@ const PRIVACY: Doc = {
   title: 'Privacy Policy',
   lead:
     'We respect your privacy and are committed to protecting your personal data. This Privacy Policy outlines how your information is collected, used, processed, and protected when using the ACVR.',
-  chips: ['🔐 SSL/TLS encryption', '🙅 Never sold or leased'],
   sections: [
     {
       num: '1',
@@ -278,31 +260,9 @@ const PRIVACY: Doc = {
 
 const DOCS: Record<Doc['key'], Doc> = { about: ABOUT, terms: TERMS, privacy: PRIVACY };
 
-/** The other documents, offered as cross-links so the legal pages navigate. */
-const RELATED: Record<Doc['key'], { to: string; label: string; blurb: string }[]> = {
-  about: [
-    { to: '/terms', label: 'Terms of Use', blurb: 'What you may and may not do' },
-    { to: '/privacy', label: 'Privacy Policy', blurb: 'How your data is handled' },
-  ],
-  terms: [
-    { to: '/about', label: 'About ACVR', blurb: 'What the registry is' },
-    { to: '/privacy', label: 'Privacy Policy', blurb: 'How your data is handled' },
-  ],
-  privacy: [
-    { to: '/about', label: 'About ACVR', blurb: 'What the registry is' },
-    { to: '/terms', label: 'Terms of Use', blurb: 'What you may and may not do' },
-  ],
-};
-
 /* ─────────────────────────────────────────────────────────────
    Rendering
    ───────────────────────────────────────────────────────────── */
-
-const slugify = (value: string) =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
 
 const BlockView = ({ block }: { block: Block }) => {
   switch (block.kind) {
@@ -310,12 +270,7 @@ const BlockView = ({ block }: { block: Block }) => {
       return <p className="cp-para">{block.text}</p>;
 
     case 'sub':
-      return (
-        <h3 className="cp-subhead">
-          <span className="cp-subhead-num">{block.num}</span>
-          {block.title}
-        </h3>
-      );
+      return <h3 className="cp-subhead">{block.num} {block.title}</h3>;
 
     case 'ul':
       return (
@@ -328,24 +283,19 @@ const BlockView = ({ block }: { block: Block }) => {
 
     case 'kv':
       return (
-        <div className="cp-callouts">
+        <ul className="cp-list">
           {block.items.map((item, i) => (
-            <div className="cp-callout" key={i}>
-              <span className="cp-callout-label">{item.label}</span>
-              <p className="cp-callout-text">{item.text}</p>
-            </div>
+            <li key={i}>
+              <strong>{item.label}:</strong> {item.text}
+            </li>
           ))}
-        </div>
+        </ul>
       );
   }
 };
 
 const ContentPage = ({ doc }: { doc: Doc['key'] }) => {
-  const navigate = useNavigate();
   const content = DOCS[doc];
-
-  const [activeId, setActiveId] = useState('');
-  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   // Footer links are reached from the bottom of a long page; without this the
   // new page would open already scrolled down.
@@ -353,69 +303,23 @@ const ContentPage = ({ doc }: { doc: Doc['key'] }) => {
     window.scrollTo(0, 0);
   }, [doc]);
 
-  // Highlight the table-of-contents entry for the section currently in view.
-  useEffect(() => {
-    const onScroll = () => {
-      let current = content.sections[0] ? slugify(content.sections[0].title) : '';
-      for (const section of content.sections) {
-        const el = sectionRefs.current[slugify(section.title)];
-        if (el && el.getBoundingClientRect().top <= 140) {
-          current = slugify(section.title);
-        }
-      }
-      setActiveId(current);
-    };
-
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [doc, content]);
-
-  const jumpTo = (id: string) => {
-    const el = sectionRefs.current[id];
-    if (!el) return;
-    // Offset so the heading clears the top of the viewport.
-    window.scrollTo({
-      top: el.getBoundingClientRect().top + window.scrollY - 90,
-      behavior: 'smooth',
-    });
-  };
-
   return (
     <div className="content-page">
       <Header />
 
       <main className="cp-main">
-        {/* ── Hero ── */}
-        <section className="cp-hero">
+        <div className="cp-hero">
           <div className="cp-hero-inner">
-            <nav className="cp-crumbs" aria-label="Breadcrumb">
-              <button type="button" className="cp-crumb-link" onClick={() => navigate('/')}>
-                Home
-              </button>
-              <span className="cp-crumb-sep" aria-hidden="true">›</span>
-              <span className="cp-crumb-current">{content.title}</span>
-            </nav>
-
-            <span className="cp-eyebrow">Academic Credential Verification &amp; Registry</span>
             <h1 className="cp-title">{content.title}</h1>
             <p className="cp-lead">{content.lead}</p>
-
-            <div className="cp-chips">
-              {content.chips.map(chip => (
-                <span className="cp-chip" key={chip}>{chip}</span>
-              ))}
-            </div>
           </div>
-        </section>
+        </div>
 
         <div className="cp-body">
-          {/* ── Who it is for (About only) ── */}
           {content.audiences && (
             <div className="cp-audience-grid">
               {content.audiences.map(a => (
                 <div className="cp-audience-card" key={a.title}>
-                  <span className="cp-audience-icon" aria-hidden="true">{a.icon}</span>
                   <h3>{a.title}</h3>
                   <p>{a.text}</p>
                 </div>
@@ -423,91 +327,21 @@ const ContentPage = ({ doc }: { doc: Doc['key'] }) => {
             </div>
           )}
 
-          <div className="cp-layout">
-            {/* ── Sidebar ── */}
-            <aside className="cp-side">
-              <nav className="cp-toc" aria-label="On this page">
-                <span className="cp-toc-title">On this page</span>
-                <ul className="cp-toc-list">
-                  {content.sections.map(section => {
-                    const id = slugify(section.title);
-                    return (
-                      <li key={id}>
-                        <button
-                          type="button"
-                          className={`cp-toc-link ${activeId === id ? 'is-active' : ''}`}
-                          onClick={() => jumpTo(id)}
-                        >
-                          {section.title}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </nav>
+          <article className="cp-doc">
+            {content.sections.map(section => (
+              <section className="cp-section" key={section.title}>
+                <h2 className="cp-section-title">
+                  {section.num && <span className="cp-section-num">{section.num}.</span>}
+                  {section.title}
+                </h2>
 
-              <nav className="cp-cross" aria-label="More information">
-                <span className="cp-toc-title">More information</span>
-                <ul>
-                  {RELATED[doc].map(item => (
-                    <li key={item.to}>
-                      <button
-                        type="button"
-                        className="cp-cross-link"
-                        onClick={() => navigate(item.to)}
-                      >
-                        <span className="cp-cross-label">{item.label}</span>
-                        <span className="cp-cross-blurb">{item.blurb}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-            </aside>
-
-            {/* ── Document ── */}
-            <article className="cp-card">
-              {content.sections.map(section => {
-                const id = slugify(section.title);
-                return (
-                  <section
-                    className="cp-section"
-                    key={id}
-                    ref={el => { sectionRefs.current[id] = el; }}
-                  >
-                    <div className="cp-section-head">
-                      <span className="cp-section-tile" aria-hidden="true">
-                        {section.num ?? section.icon}
-                      </span>
-                      <h2 className="cp-section-title">{section.title}</h2>
-                    </div>
-
-                    {section.intro && <p className="cp-para">{section.intro}</p>}
-                    {section.blocks?.map((block, i) => (
-                      <BlockView block={block} key={i} />
-                    ))}
-                  </section>
-                );
-              })}
-
-              <div className="cp-actions">
-                <button
-                  type="button"
-                  className="cp-btn cp-btn-primary"
-                  onClick={() => navigate('/')}
-                >
-                  <span aria-hidden="true">←</span> Back to Home
-                </button>
-                <button
-                  type="button"
-                  className="cp-btn cp-btn-ghost"
-                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                >
-                  <span aria-hidden="true">↑</span> Back to top
-                </button>
-              </div>
-            </article>
-          </div>
+                {section.intro && <p className="cp-para">{section.intro}</p>}
+                {section.blocks?.map((block, i) => (
+                  <BlockView block={block} key={i} />
+                ))}
+              </section>
+            ))}
+          </article>
         </div>
       </main>
 
