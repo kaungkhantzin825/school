@@ -32,7 +32,8 @@ const Header = () => {
             </li>
             <li>
               <a
-                onClick={() => navigate('/coming-soon', { state: { title: 'About MAVER' } })}
+                onClick={() => navigate('/about')}
+                className={isActive('/about') ? 'active' : ''}
                 style={{ cursor: 'pointer' }}
               >
                 About MAVER

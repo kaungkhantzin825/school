@@ -350,7 +350,7 @@ const RegisterPage = () => {
 
           <div className="auth-terms">
             By registering, you agree to the{' '}
-            <a className="auth-link-btn" onClick={() => navigate('/coming-soon', { state: { title: 'Privacy Policy' } })}>privacy policy</a>
+            <a className="auth-link-btn" onClick={() => navigate('/privacy')}>privacy policy</a>
             {' '}and the{' '}
             <a className="auth-link-btn" onClick={() => navigate('/coming-soon', { state: { title: 'Terms and Conditions' } })}>terms and conditions</a>.
 

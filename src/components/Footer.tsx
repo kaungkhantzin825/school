@@ -40,7 +40,7 @@ const Footer = () => {
           <ul>
             <li>
               <a
-                onClick={() => navigate('/coming-soon', { state: { title: 'Term of use' } })}
+                onClick={() => navigate('/terms')}
                 style={{ cursor: 'pointer' }}
               >
                 Term of use
@@ -48,7 +48,7 @@ const Footer = () => {
             </li>
             <li>
               <a
-                onClick={() => navigate('/coming-soon', { state: { title: 'Privacy policy' } })}
+                onClick={() => navigate('/privacy')}
                 style={{ cursor: 'pointer' }}
               >
                 Privacy policy
@@ -56,7 +56,7 @@ const Footer = () => {
             </li>
             <li>
               <a
-                onClick={() => navigate('/coming-soon', { state: { title: 'Terms and conditions' } })}
+                onClick={() => navigate('/terms')}
                 style={{ cursor: 'pointer' }}
               >
                 Terms and conditions

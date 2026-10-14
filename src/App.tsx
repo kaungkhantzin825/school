@@ -6,6 +6,7 @@ import UniversityInfoPage from './pages/UniversityInfoPage';
 import VerificationFormPage from './pages/VerificationFormPage';
 import VerificationResultPage from './pages/VerificationResultPage';
 import ComingSoonPage from './pages/ComingSoonPage';
+import ContentPage from './pages/ContentPage';
 
 
 const LoginPage           = lazy(() => import('./pages/admin/LoginPage'));
@@ -38,6 +39,9 @@ function App() {
             <Route path="/user/admin" element={<UserAdminDashboard />} />
             <Route path="/superadmin/admin" element={<SuperAdminDashboard />} />
             <Route path="/verifier/dashboard" element={<VerifierDashboard />} />
+            <Route path="/about"   element={<ContentPage doc="about" />} />
+            <Route path="/terms"   element={<ContentPage doc="terms" />} />
+            <Route path="/privacy" element={<ContentPage doc="privacy" />} />
             <Route path="/coming-soon" element={<ComingSoonPage />} />
           </Routes>
         </Suspense>

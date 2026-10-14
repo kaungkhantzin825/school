@@ -103,6 +103,17 @@
 }
 .step-connector.done { background: var(--success); }
 
+/* ── "Please select one verification method below:" ──
+   Spans both columns, between the step bar and the split. */
+.vf-method-heading {
+  padding: 1.75rem 2rem 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: center;
+  letter-spacing: -0.01em;
+}
+
 /* ── Form body ── */
 .form-body {
   padding: 2rem;
@@ -433,6 +444,11 @@ textarea.form-control {
 @media (max-width: 900px) {
   .vf-split {
     grid-template-columns: 1fr;
+  }
+
+  .vf-method-heading {
+    padding: 1.5rem 1.25rem 0;
+    font-size: 0.98rem;
   }
 
   .vf-or {

@@ -230,6 +230,8 @@ const VerificationFormPage = () => {
             </div>
           </div>
 
+          <h2 className="vf-method-heading">Please select one verification method below:</h2>
+
           <div className="vf-split">
 
             {/* ── Left: raise the request by uploading the certificate ── */}
@@ -239,7 +241,7 @@ const VerificationFormPage = () => {
                   Upload the Degree certificate (or) Notary Translation
                 </h3>
                 <p className="vf-panel-sub">
-                  For older certificates written in Myanmar. Our registrar team reads the
+                  For older certificates written in Myanmar. Our registrar reads the
                   document and checks it against the university's archive.
                 </p>
               </div>
@@ -286,7 +288,7 @@ const VerificationFormPage = () => {
               <div className="vf-warning">
                 <span className="vf-warning-icon" aria-hidden="true">⏱</span>
                 <span>
-                  The authentication and verification of degree certificates may require{' '}
+                  Verification for uploaded degree certificate may take{' '}
                   <strong>2 to 5 business days</strong>.
                 </span>
               </div>
@@ -324,8 +326,8 @@ const VerificationFormPage = () => {
               <div className="vf-panel-head">
                 <h3 className="vf-panel-title">Enter the details instead</h3>
                 <p className="vf-panel-sub">
-                  If the graduate's record is already in the university's digital register,
-                  this returns a result instantly.
+                  If the graduate's record exists in our digital registry,
+                  verification will be instant.
                 </p>
               </div>
 
