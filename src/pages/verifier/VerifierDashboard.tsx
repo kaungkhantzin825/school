@@ -6,7 +6,7 @@ import StudentPhoto from '../../components/StudentPhoto';
 import { getStoredUser, getToken, clearSession } from '../../utils/auth';
 import '../../styles/verifier/VerifierDashboard.css';
 
-type Tab = 'dashboard' | 'verified' | 'pending';
+type Tab = 'dashboard' | 'verified' | 'pending' | 'rejected';
 
 interface LogRow {
   id: number;
@@ -18,10 +18,21 @@ interface LogRow {
   result: string;
   status: string;
   created_at: string;
+  updated_at?: string;
   sla_due_at: string | null;
+  /**
+   * The verifier's own note, written when the enquiry was raised. It is NOT
+   * overwritten when a registrar resolves the request — the registrar's
+   * wording goes to `resolution_notes` instead.
+   */
+  notes?: string | null;
+  /** The registrar's decision note: the reason, for a rejected request. */
+  resolution_notes?: string | null;
   /** Set when the request was raised by uploading a certificate scan. */
   document_url?: string | null;
   document_name?: string | null;
+  verifier_email?: string;
+  organization_name?: string;
   university?: { name: string };
   student?: {
     id: number;
@@ -81,6 +92,12 @@ const formatDegree = (log: LogRow) => {
   return `${deg}(${spec})`;
 };
 
+/**
+ * Rows resolved before `resolution_notes` existed kept the registrar's wording
+ * in `notes`. Fall back to it so older rejections still explain themselves.
+ */
+const rejectionReason = (log: LogRow) => log.resolution_notes || log.notes || null;
+
 const slaStatus = (log: LogRow) => {
   if (!log.sla_due_at) return { label: 'New Request', cls: 'sla-text-new' };
   const now = Date.now();
@@ -110,8 +127,11 @@ const VerifierDashboard = () => {
   const [tab, setTab] = useState<Tab>('verified');
   const [verified, setVerified] = useState<LogRow[]>([]);
   const [pending, setPending] = useState<LogRow[]>([]);
+  const [rejected, setRejected] = useState<LogRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [reviewingId, setReviewingId] = useState<number | null>(null);
+  /** Row shown in the rejection detail modal. */
+  const [detailLog, setDetailLog] = useState<LogRow | null>(null);
 
   const fetchVerified = async () => {
     setLoading(true);
@@ -137,13 +157,31 @@ const VerifierDashboard = () => {
     }
   };
 
-  // Both counts are needed for the Dashboard tab's stat cards, so load them
-  // once on mount; switching tabs afterwards refreshes just that tab.
+  /**
+   * Requests a registrar declined. The server filters on
+   * status=failed + request_ref, so instant "not found" searches — which
+   * never reached a registrar — are not mixed in here.
+   */
+  const fetchRejected = async () => {
+    setLoading(true);
+    try {
+      const res = await verificationAPI.getLogs({ rejected: 1 });
+      setRejected(res.data.data || res.data);
+    } catch {
+      setRejected([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // The Dashboard tab's stat cards need all three counts, so load them once on
+  // mount; switching tabs afterwards refreshes just that tab.
   const mounted = useRef(false);
 
   useEffect(() => {
     fetchVerified();
     fetchPending();
+    fetchRejected();
     mounted.current = true;
   }, []);
 
@@ -151,6 +189,7 @@ const VerifierDashboard = () => {
     if (!mounted.current) return;
     if (tab === 'verified') fetchVerified();
     if (tab === 'pending') fetchPending();
+    if (tab === 'rejected') fetchRejected();
   }, [tab]);
 
   const handleReview = async (log: LogRow) => {
@@ -239,6 +278,20 @@ const VerifierDashboard = () => {
               </span>
               <span>Pending Requests</span>
             </button>
+
+            <button
+              className={`vd-nav-item ${tab === 'rejected' ? 'active' : ''}`}
+              onClick={() => setTab('rejected')}
+            >
+              <span className="vd-nav-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="15" y1="9" x2="9" y2="15" />
+                  <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+              </span>
+              <span>Reject Record</span>
+            </button>
           </nav>
 
           <button className="vd-logout-btn" onClick={handleLogout}>
@@ -265,6 +318,14 @@ const VerifierDashboard = () => {
                   <div>
                     <div className="vd-stat-val">{pending.length}</div>
                     <div className="vd-stat-lbl">Pending Requests</div>
+                  </div>
+                </div>
+
+                <div className="vd-stat-card" onClick={() => setTab('rejected')} style={{ cursor: 'pointer' }}>
+                  <div className="vd-stat-icon stat-red">✕</div>
+                  <div>
+                    <div className="vd-stat-val">{rejected.length}</div>
+                    <div className="vd-stat-lbl">Rejected Requests</div>
                   </div>
                 </div>
 
@@ -444,8 +505,184 @@ const VerifierDashboard = () => {
               </div>
             </div>
           )}
+
+          {/* TAB 4: REJECTED REQUESTS — the registrar's reason, shown back to
+              the verifier so a declined enquiry is not a silent dead end. */}
+          {tab === 'rejected' && (
+            <div className="vd-pending-card">
+              <div className="vd-pending-header">
+                <h2 className="vd-pending-title">REJECTED RECORDS</h2>
+                <button className="vd-refresh-btn" onClick={fetchRejected} disabled={loading}>
+                  🔄 {loading ? 'Refreshing...' : 'Refresh Requests'}
+                </button>
+              </div>
+
+              <p className="vd-rejected-note">
+                These requests were declined by the university registrar after checking
+                the archive. The reason given is shown so you can tell the candidate
+                exactly what was wrong with the enquiry.
+              </p>
+
+              <div className="vd-table-scroll">
+                <table className="vd-pending-table vd-rejected-table">
+                  <thead>
+                    <tr>
+                      <th className="col-no">No.</th>
+                      <th>Request ID</th>
+                      <th>Candidate Name</th>
+                      <th>Degree / Specialization</th>
+                      <th>Date Submitted</th>
+                      <th>Date Rejected</th>
+                      <th>Reason for Rejection</th>
+                      <th className="col-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rejected.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="vd-empty-cell">
+                          No rejected records.
+                        </td>
+                      </tr>
+                    ) : (
+                      rejected.map((log, idx) => {
+                        const reqId = log.request_ref || `VR-${String(log.id).padStart(4, '0')}`;
+                        const displayRef = reqId.startsWith('#') ? reqId : `#${reqId}`;
+                        return (
+                          <tr key={log.id}>
+                            <td className="col-no">{idx + 1}</td>
+                            <td className="col-ref">{displayRef}</td>
+                            <td className="col-bold">{log.searched_name}</td>
+                            <td>
+                              {log.searched_degree
+                                ? log.searched_degree
+                                : (!log.document_url && <span style={{ color: '#94a3b8' }}>—</span>)}
+                              {log.document_url && (
+                                <a
+                                  className="vd-doc-chip"
+                                  href={resolveUploadUrl(log.document_url) || '#'}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  title={`Open ${log.document_name || 'the uploaded certificate'} in a new tab`}
+                                >
+                                  <span aria-hidden="true">📎</span> Open certificate
+                                </a>
+                              )}
+                            </td>
+                            <td><DateTimeCell value={log.created_at} /></td>
+                            <td><DateTimeCell value={log.updated_at} /></td>
+                            <td className="vd-reason">{rejectionReason(log) || '—'}</td>
+                            <td className="col-center">
+                              <button
+                                className="vd-review-btn vd-view-btn"
+                                onClick={() => setDetailLog(log)}
+                              >
+                                VIEW
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </main>
       </div>
+
+      {/* ── Rejection detail modal ── */}
+      {detailLog && (
+        <div className="vd-modal-overlay" onClick={() => setDetailLog(null)}>
+          <div
+            className="vd-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Rejection details"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="vd-modal-head">
+              <h3>Reject Verification Request</h3>
+              <button
+                type="button"
+                className="vd-modal-close"
+                onClick={() => setDetailLog(null)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="vd-modal-body">
+              <div className="vd-detail-grid">
+                <span className="vd-detail-lbl">Request ID</span>
+                <span className="vd-detail-val vd-detail-ref">
+                  {detailLog.request_ref || `VR-${String(detailLog.id).padStart(4, '0')}`}
+                </span>
+
+                <span className="vd-detail-lbl">Candidate</span>
+                <span className="vd-detail-val">{detailLog.searched_name}</span>
+
+                <span className="vd-detail-lbl">Father's Name</span>
+                <span className="vd-detail-val">{detailLog.searched_father_name || '—'}</span>
+
+                <span className="vd-detail-lbl">Degree / Year</span>
+                <span className="vd-detail-val">
+                  {formatDegree(detailLog) || '—'}
+                  {detailLog.searched_year ? ` (${detailLog.searched_year})` : ''}
+                </span>
+
+                <span className="vd-detail-lbl">Verifier</span>
+                <span className="vd-detail-val">
+                  {detailLog.organization_name || '—'}
+                  {detailLog.verifier_email ? ` (${detailLog.verifier_email})` : ''}
+                </span>
+
+                <span className="vd-detail-lbl">Additional Notes</span>
+                <span className="vd-detail-val vd-detail-pre">
+                  {detailLog.notes || '—'}
+                </span>
+              </div>
+
+              {detailLog.document_url && (
+                <a
+                  className="vd-doc-chip vd-detail-doc"
+                  href={resolveUploadUrl(detailLog.document_url) || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span aria-hidden="true">📎</span> Open submitted certificate
+                </a>
+              )}
+
+              <div className="vd-modal-section">
+                <label>Rejection Reason</label>
+                <div className="vd-modal-reason">
+                  {rejectionReason(detailLog) || 'No reason was recorded for this rejection.'}
+                </div>
+              </div>
+
+              <p className="vd-modal-foot-note">
+                Rejected on {fmtDate(detailLog.updated_at)}
+                {detailLog.university?.name ? ` by ${detailLog.university.name}` : ''}.
+                If you believe this is wrong, confirm the details with the candidate
+                and submit a new request.
+              </p>
+            </div>
+
+            <div className="vd-modal-actions">
+              <button
+                type="button"
+                className="vd-btn-secondary"
+                onClick={() => setDetailLog(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

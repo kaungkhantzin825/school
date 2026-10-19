@@ -99,7 +99,19 @@ export const authAPI = {
   
   register: (data: any) =>
     api.post('/register', data),
-  
+
+  /** Ask for a reset link. The API answers identically for unknown addresses. */
+  forgotPassword: (email: string) =>
+    api.post('/forgot-password', { email }),
+
+  resetPassword: (data: {
+    token: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+  }) =>
+    api.post('/reset-password', data),
+
   logout: () =>
     api.post('/logout'),
   

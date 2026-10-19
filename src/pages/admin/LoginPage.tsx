@@ -40,7 +40,8 @@ const LoginPage = () => {
   const redirectTo: string | undefined = location.state?.redirectTo;
   const university = location.state?.university;
 
-  const [email, setEmail] = useState('');
+  // Prefilled when the user comes back from a completed password reset.
+  const [email, setEmail] = useState<string>(location.state?.email || '');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(true);
   const [showPwd, setShowPwd] = useState(false);
@@ -126,14 +127,23 @@ const LoginPage = () => {
             </button>
           </div>
 
-          <label className="auth-remember">
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={e => setRemember(e.target.checked)}
-            />
-            <span>Remember Me</span>
-          </label>
+          <div className="auth-row">
+            <label className="auth-remember">
+              <input
+                type="checkbox"
+                checked={remember}
+                onChange={e => setRemember(e.target.checked)}
+              />
+              <span>Remember Me</span>
+            </label>
+
+            <a
+              className="auth-forgot"
+              onClick={() => navigate('/forgot-password', { state: { email } })}
+            >
+              Forgot password?
+            </a>
+          </div>
 
           <button type="submit" className="auth-submit" disabled={loading}>
             {loading ? 'Signing in…' : 'Sign In'}

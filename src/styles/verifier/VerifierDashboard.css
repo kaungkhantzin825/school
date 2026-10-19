@@ -359,6 +359,35 @@
   background-color: #f8fafc;
 }
 
+/* ── Rejected requests ── */
+
+/* 7 columns, one of them prose — the default 860px would crush the reason. */
+.vd-rejected-table {
+  min-width: 1080px;
+}
+
+.vd-rejected-note {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: #7c2d12;
+}
+
+/* The registrar's reason. Pre-line keeps the paragraph breaks they typed. */
+.vd-reason {
+  min-width: 240px;
+  max-width: 380px;
+  white-space: pre-line;
+  line-height: 1.55;
+  color: #7f1d1d;
+  background: #fef2f2;
+  border-left: 3px solid #f87171;
+}
+
 /* SLA Status Text (Image 2 style) */
 .vd-sla-text {
   font-size: 0.88rem;
@@ -446,6 +475,7 @@
 .stat-green { background: #dcfce7; }
 .stat-amber { background: #fef3c7; }
 .stat-blue { background: #dbeafe; }
+.stat-red { background: #fee2e2; color: #b91c1c; }
 
 .vd-stat-val {
   font-size: 1.6rem;
@@ -533,5 +563,159 @@
   .vd-logout-btn {
     margin-top: 0;
     margin-left: auto;
+  }
+}
+
+/* ── Rejection detail modal ── */
+
+.vd-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
+}
+
+.vd-modal {
+  width: 100%;
+  max-width: 640px;
+  max-height: 88vh;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.28);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.vd-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.vd-modal-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.vd-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0 0.25rem;
+  font-family: inherit;
+}
+
+.vd-modal-close:hover {
+  color: #475569;
+}
+
+.vd-modal-body {
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+}
+
+/* Label / value pairs, mirroring the registrar's review modal. */
+.vd-detail-grid {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  column-gap: 1rem;
+  row-gap: 0.7rem;
+  font-size: 0.86rem;
+}
+
+.vd-detail-lbl {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.vd-detail-val {
+  color: #1e293b;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.vd-detail-ref {
+  color: #163172;
+  font-family: monospace;
+  letter-spacing: 0.02em;
+}
+
+/* Keeps the paragraph breaks the verifier typed. */
+.vd-detail-pre {
+  white-space: pre-line;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.vd-detail-doc {
+  margin-top: 1rem;
+}
+
+.vd-modal-section {
+  margin-top: 1.35rem;
+}
+
+.vd-modal-section label {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.45rem;
+}
+
+.vd-modal-reason {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #ef4444;
+  border-radius: 6px;
+  padding: 0.85rem 1rem;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: #7f1d1d;
+  white-space: pre-line;
+}
+
+.vd-modal-foot-note {
+  margin: 1rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: #94a3b8;
+}
+
+.vd-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.9rem 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.vd-view-btn {
+  padding: 0.45rem 1rem;
+}
+
+@media (max-width: 560px) {
+  .vd-detail-grid {
+    grid-template-columns: 1fr;
+    row-gap: 0.15rem;
+  }
+  .vd-detail-lbl {
+    margin-top: 0.6rem;
   }
 }

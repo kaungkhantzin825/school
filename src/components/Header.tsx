@@ -36,7 +36,7 @@ const Header = () => {
                 className={isActive('/about') ? 'active' : ''}
                 style={{ cursor: 'pointer' }}
               >
-                About MAVER
+                About ACVR
               </a>
             </li>
           </ul>

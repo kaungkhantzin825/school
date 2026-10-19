@@ -148,7 +148,19 @@
   margin-bottom: 0.3rem;
 }
 
-/* ── Remember me ── */
+/* ── Remember me / Forgot password row ── */
+.auth-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.3rem 0 1.25rem;
+}
+
+.auth-row .auth-remember {
+  margin: 0;
+}
+
 .auth-remember {
   display: flex;
   align-items: center;
@@ -158,6 +170,18 @@
   margin: 0.3rem 0 1.25rem;
   cursor: pointer;
   user-select: none;
+}
+
+.auth-forgot {
+  font-size: 0.8rem;
+  color: #2563eb;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.auth-forgot:hover {
+  text-decoration: underline;
 }
 
 .auth-remember input {

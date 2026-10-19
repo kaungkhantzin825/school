@@ -10,6 +10,8 @@ import ContentPage from './pages/ContentPage';
 
 
 const LoginPage           = lazy(() => import('./pages/admin/LoginPage'));
+const ForgotPasswordPage  = lazy(() => import('./pages/admin/ForgotPasswordPage'));
+const ResetPasswordPage   = lazy(() => import('./pages/admin/ResetPasswordPage'));
 const RegisterPage        = lazy(() => import('./pages/RegisterPage'));
 const UserAdminDashboard  = lazy(() => import('./pages/admin/UserAdminDashboard'));
 const SuperAdminDashboard = lazy(() => import('./pages/admin/SuperAdminDashboard'));
@@ -36,6 +38,8 @@ function App() {
             <Route path="/verification-result" element={<VerificationResultPage />} />
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/user/admin" element={<UserAdminDashboard />} />
             <Route path="/superadmin/admin" element={<SuperAdminDashboard />} />
             <Route path="/verifier/dashboard" element={<VerifierDashboard />} />
