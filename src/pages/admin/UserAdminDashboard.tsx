@@ -562,22 +562,27 @@ const UserAdminDashboard = () => {
         </div>
 
         <nav className="ud-nav">
+          {/* Each item carries both the English label and the Myanmar one —
+              registrars read the Myanmar line faster than the English term. */}
           {([
-            ['upload',         '📁', 'Data Upload',          0],
-            ['students',       '👨‍🎓', 'All Students',         0],
-            ['pending_review', '⏳', 'Pending Reviews',       pendingLogs.length],
-            ['logs',           '📋', 'Activity Logs',        0],
-            ['degree',         '🎓', 'Degree',               0],
-            ['addstudent',     '➕', 'Add Student Manually', 0],
-            ['settings',       '⚙️', 'University Settings',   0],
-          ] as [Tab, string, string, number][]).map(([id, icon, label, badgeCount]) => (
+            ['upload',         '📁', 'Data Upload',          'ဒေတာဖိုင် Upload',         0],
+            ['students',       '👨‍🎓', 'All Students',         'ဘွဲ့ရစာရင်းမှတ်တမ်းများ',  0],
+            ['pending_review', '⏳', 'Pending Reviews',      'လုပ်ဆောင်ရန်စာရင်း',        pendingLogs.length],
+            ['logs',           '📋', 'Activity Logs',        'Verified မှတ်တမ်းစစ်ရန်',  0],
+            ['degree',         '🎓', 'Degree',               'ဒီဂရီ မော်ဂျူး',            0],
+            ['addstudent',     '➕', 'Add Student Manually', 'ဘွဲ့ရစာရင်းသွင်းရန်',       0],
+            ['settings',       '⚙️', 'University Settings',  'တက္ကသိုလ် Setting',         0],
+          ] as [Tab, string, string, string, number][]).map(([id, icon, label, mm, badgeCount]) => (
             <button
               key={id}
               className={`ud-nav-item ${tab === id ? 'active' : ''}`}
               onClick={() => setTab(id)}
             >
               <span>{icon}</span>
-              <span style={{ flex: 1 }}>{label}</span>
+              <span className="ud-nav-text">
+                <span className="ud-nav-label">{label}</span>
+                <span className="ud-nav-mm">{mm}</span>
+              </span>
               {badgeCount > 0 && <span className="ud-nav-badge">{badgeCount}</span>}
             </button>
           ))}
@@ -1157,6 +1162,10 @@ const UserAdminDashboard = () => {
                           <div className="ud-form-hint" style={{ marginBottom: '0.75rem' }}>
                             ⚠️ Enter the graduate's real details exactly as they appear in the archive
                             ledger — these are stored as the official verified record.
+                            <span className="ud-mm-line">
+                              ကျေးဇူးပြု၍ ဘွဲ့ရကျောင်းသား/သူ၏ ဘွဲ့ရစာရင်းမှတ်တမ်းစာအုပ်ဖိုင်ထဲတွင်
+                              ပါရှိသည့်အတိုင်း ဖြည့်သွင်းပေးပါရန်။
+                            </span>
                           </div>
 
                           {/* An upload-raised request has no graduate details on file, so
@@ -1167,6 +1176,11 @@ const UserAdminDashboard = () => {
                                 📎 This request came in as an uploaded certificate, so no graduate
                                 details are on file. Read them off the document and enter them here
                                 — they become the official verified record.
+                                <span className="ud-mm-line">
+                                  ဤတောင်းဆိုမှုသည် ဘွဲ့လက်မှတ်ဖိုင် Upload ဖြင့် ဝင်လာခြင်းဖြစ်သဖြင့်
+                                  ကျောင်းသား၏ အချက်အလက်များ မရှိသေးပါ။ လက်မှတ်ပေါ်ရှိအတိုင်း ဤနေရာတွင်
+                                  ဖြည့်သွင်းပါ — ၎င်းသည် တရားဝင် Verified မှတ်တမ်း ဖြစ်လာပါမည်။
+                                </span>
                               </div>
 
                               <div className="ud-form-row">
@@ -1275,6 +1289,10 @@ const UserAdminDashboard = () => {
 
                           <div className="ud-form-alert">
                             ℹ️ Upon approval, this request will be immediately marked as <strong>Verified</strong> in the Verifier's Dashboard, and added to the official student database.
+                            <span className="ud-mm-line">
+                              အတည်ပြု Confirm ပြုပါက Verified မှတ်တမ်းစစ်ရန် နေရာတွင်
+                              ကြည့်ရှူ့စစ်ဆေးနိုင်ပါသည်။
+                            </span>
                           </div>
                         </>
                       ) : (
