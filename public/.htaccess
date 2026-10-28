@@ -13,6 +13,22 @@
     RewriteEngine On
     RewriteBase /
 
+    # ── Canonical host: www.acvr.edu.mm → acvr.edu.mm ──
+    #
+    #  Keeps one public URL for SEO and for the session/CORS setup. Runs
+    #  BEFORE the SPA catch-all below, otherwise the request would be
+    #  rewritten to index.html and never redirect.
+    #
+    #  NOTE: this only fires once a request actually reaches Apache with
+    #  Host: www.acvr.edu.mm. It does not create DNS — if www has no A/CNAME
+    #  record, the browser fails before any HTTP request is made.
+    #
+    #  REQUEST_URI is the path only; mod_rewrite re-appends the original
+    #  query string on its own, so /login?x=1 survives the hop. 301 is cached
+    #  by browsers for a long time — test with 302 first if unsure.
+    RewriteCond %{HTTP_HOST} ^www\.acvr\.edu\.mm$ [NC]
+    RewriteRule ^ https://acvr.edu.mm%{REQUEST_URI} [R=301,L]
+
     # Never rewrite the API (in case it is proxied under the same host)
     RewriteRule ^api/ - [L]
 
