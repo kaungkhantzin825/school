@@ -261,6 +261,30 @@ export const registrationAPI = {
     api.patch(`/registrations/${id}`, { status, review_notes }),
 };
 
+// Public contact form — the API emails the message to the support mailbox.
+export const contactAPI = {
+  send: (data: {
+    name: string;
+    email: string;
+    country?: string;
+    organization?: string;
+    subject: string;
+    message: string;
+    not_robot: boolean;
+    website?: string;
+  }) =>
+    api.post('/contact', data),
+};
+
+// Account activity trail (Super Admin only)
+export const activityAPI = {
+  getAll: (params?: any) =>
+    api.get('/activity-logs', { params }),
+
+  summary: () =>
+    api.get('/activity-logs/summary'),
+};
+
 // Degree API
 export const degreeAPI = {
   getAll: (params?: any) =>

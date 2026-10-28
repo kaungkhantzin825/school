@@ -843,3 +843,116 @@
   .sd-main    { margin-left: 200px; }
   .stats-grid { grid-template-columns: 1fr 1fr; }
 }
+
+/* ============================================================
+   User Log — account activity trail
+   ============================================================ */
+
+.trend-down { color: var(--danger, #dc2626); }
+
+.ul-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ul-select {
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid #d7e0eb;
+  border-radius: 7px;
+  padding: 0.45rem 0.6rem;
+  cursor: pointer;
+}
+
+.ul-select:focus {
+  outline: none;
+  border-color: var(--primary, #1d4ed8);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+}
+
+.ul-count {
+  font-size: 0.78rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.ul-table td {
+  vertical-align: top;
+}
+
+.ul-time {
+  white-space: nowrap;
+  font-size: 0.82rem;
+  color: #475569;
+}
+
+.ul-user {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ul-user-name {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.ul-sub {
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: #8b9aab;
+  word-break: break-word;
+}
+
+.ul-sub-block {
+  display: block;
+  margin-top: 3px;
+  max-width: 240px;
+}
+
+.ul-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.ul-pill-ok       { background: #e8f7ee; color: #12854a; }
+.ul-pill-danger   { background: #fdeaea; color: #b91c1c; }
+.ul-pill-neutral  { background: #eef2f7; color: #475569; }
+
+.ul-ip {
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 0.78rem;
+  color: #334155;
+  background: #f4f7fb;
+  border-radius: 4px;
+  padding: 2px 6px;
+  white-space: nowrap;
+}
+
+.ul-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  border-top: 1px solid #eef2f7;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.ul-pager .action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .ul-filters { flex-wrap: wrap; }
+  .ul-table    { min-width: 780px; }
+}

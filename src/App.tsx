@@ -7,6 +7,8 @@ import VerificationFormPage from './pages/VerificationFormPage';
 import VerificationResultPage from './pages/VerificationResultPage';
 import ComingSoonPage from './pages/ComingSoonPage';
 import ContentPage from './pages/ContentPage';
+import FaqPage from './pages/FaqPage';
+import ContactPage from './pages/ContactPage';
 
 
 const LoginPage           = lazy(() => import('./pages/admin/LoginPage'));
@@ -46,6 +48,8 @@ function App() {
             <Route path="/about"   element={<ContentPage doc="about" />} />
             <Route path="/terms"   element={<ContentPage doc="terms" />} />
             <Route path="/privacy" element={<ContentPage doc="privacy" />} />
+            <Route path="/faqs"    element={<FaqPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             <Route path="/coming-soon" element={<ComingSoonPage />} />
           </Routes>
         </Suspense>

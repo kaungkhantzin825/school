@@ -1,11 +1,37 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { universityAPI, userAPI, verificationAPI, registrationAPI } from '../../services/api';
+import { universityAPI, userAPI, verificationAPI, registrationAPI, activityAPI } from '../../services/api';
 import '../../styles/admin/SuperAdminDashboard.css';
 import { alertSuccess, alertError, confirmDelete, confirmAction } from '../../utils/alerts';
 import { getStoredUser, clearSession } from '../../utils/auth';
 
-type Tab = 'dashboard' | 'universities' | 'users' | 'registrations' | 'analytics' | 'settings';
+type Tab = 'dashboard' | 'universities' | 'users' | 'registrations' | 'activity' | 'analytics' | 'settings';
+
+interface ActivityLog {
+  id: number;
+  user_name: string | null;
+  user_email: string | null;
+  role: string | null;
+  action: string;
+  action_label?: string;
+  description: string | null;
+  ip_address: string | null;
+  country: string | null;
+  country_code: string | null;
+  city: string | null;
+  device: string | null;
+  browser: string | null;
+  platform: string | null;
+  created_at: string;
+}
+
+interface ActivitySummary {
+  logins_today: number;
+  failed_today: number;
+  active_users_7d: number;
+  countries_30d: number;
+  total: number;
+}
 
 interface University { id: number; name: string; location: string; description?: string; logo_url?: string; status: 'active'|'inactive'; students_count?: number; }
 interface User       { id: number; name: string; email: string; role: string; university?: { name: string }; }
@@ -57,6 +83,15 @@ const SuperAdminDashboard = () => {
   const [uniSearch,  setUniSearch]  = useState('');
   const [userSearch, setUserSearch] = useState('');
 
+  /* Activity log (User Log tab) */
+  const [logs,        setLogs]        = useState<ActivityLog[]>([]);
+  const [logSummary,  setLogSummary]  = useState<ActivitySummary | null>(null);
+  const [logSearch,   setLogSearch]   = useState('');
+  const [logAction,   setLogAction]   = useState('');
+  const [logPage,     setLogPage]     = useState(1);
+  const [logMeta,     setLogMeta]     = useState({ current_page: 1, last_page: 1, total: 0 });
+  const [logLoading,  setLogLoading]  = useState(false);
+
   const setUF = (k: string, v: string) => setUniForm(p => ({ ...p, [k]: v }));
   const setUsr = (k: string, v: string) => setUserForm(p => ({ ...p, [k]: v }));
 
@@ -86,6 +121,43 @@ const SuperAdminDashboard = () => {
   };
 
   const handleLogout = async () => { await logout(); navigate('/login'); };
+
+  /* Activity log — loaded only while its tab is open, and re-queried as the
+     filters change. The 350 ms delay keeps a fast typist from firing a
+     request per keystroke. */
+  const fetchLogs = async () => {
+    setLogLoading(true);
+    try {
+      const [listRes, sumRes] = await Promise.all([
+        activityAPI.getAll({
+          search: logSearch || undefined,
+          action: logAction || undefined,
+          page: logPage,
+        }),
+        activityAPI.summary(),
+      ]);
+
+      setLogs(listRes.data.data || []);
+      setLogMeta({
+        current_page: listRes.data.current_page ?? 1,
+        last_page: listRes.data.last_page ?? 1,
+        total: listRes.data.total ?? 0,
+      });
+      setLogSummary(sumRes.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLogLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (tab !== 'activity') return;
+
+    const timer = setTimeout(fetchLogs, logSearch ? 350 : 0);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, logSearch, logAction, logPage]);
 
   /* University CRUD */
   const openAddUni  = () => { setEditUni(null); setUniForm(initUni); setUniModal(true); };
@@ -171,6 +243,7 @@ const SuperAdminDashboard = () => {
             ['universities',  '🏛️', 'Universities'],
             ['users',         '👥', 'User Management'],
             ['registrations', '📝', 'Registrations'],
+            ['activity',      '🔐', 'User Log'],
             ['analytics',     '📈', 'Analytics'],
             ['settings',      '⚙️', 'Settings'],
           ] as [Tab, string, string][]).map(([id, icon, label]) => (
@@ -214,6 +287,7 @@ const SuperAdminDashboard = () => {
             {tab === 'universities'  && '🏛️ University Management'}
             {tab === 'users'         && '👥 User Management'}
             {tab === 'registrations' && '📝 Verifier Registrations'}
+            {tab === 'activity'      && '🔐 User Log & Access Trail'}
             {tab === 'analytics'     && '📈 Analytics & Reports'}
             {tab === 'settings'      && '⚙️ System Settings'}
           </span>
@@ -444,6 +518,145 @@ const SuperAdminDashboard = () => {
                 </tbody>
               </table>
             </div>
+          )}
+
+          {/* ── USER LOG (account activity) ── */}
+          {tab === 'activity' && (
+            <>
+              <div className="stats-grid">
+                {[
+                  { icon: '🔓', colorCls: 'icon-green',  val: logSummary?.logins_today ?? 0,    label: 'Sign-ins today',      trend: 'All accounts',    cls: 'trend-info' },
+                  { icon: '⚠️', colorCls: 'icon-amber',  val: logSummary?.failed_today ?? 0,    label: 'Failed sign-ins',     trend: 'Today',           cls: logSummary?.failed_today ? 'trend-down' : 'trend-info' },
+                  { icon: '👥', colorCls: 'icon-blue',   val: logSummary?.active_users_7d ?? 0, label: 'Active users',        trend: 'Last 7 days',     cls: 'trend-info' },
+                  { icon: '🌍', colorCls: 'icon-purple', val: logSummary?.countries_30d ?? 0,   label: 'Countries seen',      trend: 'Last 30 days',    cls: 'trend-info' },
+                ].map((s, i) => (
+                  <div className="stat-card" key={i}>
+                    <div className={`stat-icon-wrap ${s.colorCls}`}>{s.icon}</div>
+                    <div className="stat-info">
+                      <h3>{s.val}</h3>
+                      <p>{s.label}</p>
+                      <span className={`stat-trend ${s.cls}`}>{s.trend}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="table-card">
+                <div className="table-card-header">
+                  <div className="table-search">
+                    <span>🔍</span>
+                    <input
+                      placeholder="Search name, email, IP or country..."
+                      value={logSearch}
+                      onChange={e => { setLogSearch(e.target.value); setLogPage(1); }}
+                    />
+                  </div>
+
+                  <div className="ul-filters">
+                    <select
+                      className="ul-select"
+                      value={logAction}
+                      onChange={e => { setLogAction(e.target.value); setLogPage(1); }}
+                    >
+                      <option value="">All activity</option>
+                      <option value="login">Signed in</option>
+                      <option value="login_failed">Failed sign-in</option>
+                      <option value="logout">Signed out</option>
+                      <option value="password_reset_requested">Requested reset</option>
+                      <option value="password_reset">Reset password</option>
+                      <option value="password_changed">Changed password</option>
+                      <option value="account_created">Account created</option>
+                    </select>
+                    <span className="ul-count">{logMeta.total.toLocaleString()} records</span>
+                  </div>
+                </div>
+
+                <table className="sd-table ul-table">
+                  <thead>
+                    <tr>
+                      <th>Date &amp; Time</th>
+                      <th>User</th>
+                      <th>Activity</th>
+                      <th>IP Address</th>
+                      <th>Country</th>
+                      <th>Device</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {logLoading && logs.length === 0 ? (
+                      <tr><td colSpan={6}><div className="empty-state"><span>⏳</span><p>Loading activity…</p></div></td></tr>
+                    ) : logs.length === 0 ? (
+                      <tr>
+                        <td colSpan={6}>
+                          <div className="empty-state">
+                            <span>🔐</span>
+                            <p>No activity recorded yet</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : logs.map(log => (
+                      <tr key={log.id}>
+                        <td className="ul-time">
+                          {new Date(log.created_at).toLocaleString('en-GB', {
+                            day: '2-digit', month: 'short', year: 'numeric',
+                            hour: '2-digit', minute: '2-digit',
+                          })}
+                        </td>
+                        <td className="td-primary">
+                          <div className="ul-user">
+                            <span className="ul-user-name">{log.user_name || '—'}</span>
+                            {log.user_email && <span className="ul-sub">{log.user_email}</span>}
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`ul-pill ${log.action === 'login_failed' ? 'ul-pill-danger' : log.action === 'login' ? 'ul-pill-ok' : 'ul-pill-neutral'}`}>
+                            {log.action_label || log.action}
+                          </span>
+                          {log.description && <span className="ul-sub ul-sub-block">{log.description}</span>}
+                        </td>
+                        <td><code className="ul-ip">{log.ip_address || '—'}</code></td>
+                        <td>
+                          <div className="ul-user">
+                            <span>{log.country || 'Unknown'}</span>
+                            {log.city && <span className="ul-sub">{log.city}</span>}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="ul-user">
+                            <span>{log.device || '—'}</span>
+                            {(log.browser || log.platform) && (
+                              <span className="ul-sub">
+                                {[log.browser, log.platform].filter(Boolean).join(' · ')}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {logMeta.last_page > 1 && (
+                  <div className="ul-pager">
+                    <button
+                      className="action-btn action-edit"
+                      disabled={logMeta.current_page <= 1 || logLoading}
+                      onClick={() => setLogPage(p => Math.max(1, p - 1))}
+                    >
+                      ← Previous
+                    </button>
+                    <span>Page {logMeta.current_page} of {logMeta.last_page}</span>
+                    <button
+                      className="action-btn action-edit"
+                      disabled={logMeta.current_page >= logMeta.last_page || logLoading}
+                      onClick={() => setLogPage(p => p + 1)}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
           )}
 
           {/* ── ANALYTICS ── */}

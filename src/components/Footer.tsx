@@ -17,7 +17,7 @@ const Footer = () => {
           <ul>
             <li>
               <a
-                onClick={() => navigate('/coming-soon', { state: { title: 'FAQs' } })}
+                onClick={() => navigate('/faqs')}
                 style={{ cursor: 'pointer' }}
               >
                 FAQs
@@ -29,6 +29,14 @@ const Footer = () => {
                 style={{ cursor: 'pointer' }}
               >
                 User guide
+              </a>
+            </li>
+            <li>
+              <a
+                onClick={() => navigate('/contact')}
+                style={{ cursor: 'pointer' }}
+              >
+                Contact us
               </a>
             </li>
           </ul>
@@ -68,7 +76,7 @@ const Footer = () => {
         {/* Right: Copyright + Social Icons */}
         <div className="maver-footer-right">
           <span className="maver-footer-copyright">
-            copyright © {year} maver
+            copyright © {year} ACVR
           </span>
           <div className="maver-social-icons">
             {/* Facebook */}
@@ -119,7 +127,7 @@ const Footer = () => {
       {/* ── Footer Bottom ── */}
       <div className="maver-footer-bottom">
         <p className="maver-footer-bottom-text">
-          Myanmar Academic Verification &amp; Educational Registry · Ministry of Education
+          ACVR · Academic Credential Verification &amp; Registry
         </p>
       </div>
 

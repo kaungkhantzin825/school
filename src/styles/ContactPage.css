@@ -1,0 +1,359 @@
+/* ============================================================
+   ContactPage.css — public contact form
+
+   Light band heading, one centred form card. Matches the
+   About/Terms pages in colour, not in density: this page has a
+   form, so the card earns its border.
+   ============================================================ */
+
+.contact-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f7fafc;
+  color: #0f172a;
+  font-family: 'Inter', 'Noto Sans', sans-serif;
+  text-align: left;
+}
+
+.ct-main {
+  flex: 1;
+}
+
+/* ── Heading band ── */
+.ct-hero {
+  background: linear-gradient(180deg, #e8f1fb 0%, #f4f9ff 100%);
+  border-bottom: 1px solid #dbe7f5;
+  padding: 3rem 1.5rem 2.6rem;
+}
+
+.ct-hero-inner {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.ct-eyebrow {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #1d4ed8;
+  margin-bottom: 0.5rem;
+}
+
+.ct-title {
+  font-size: clamp(1.9rem, 4vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  color: #16386e;
+  margin: 0 0 0.6rem;
+}
+
+.ct-lead {
+  max-width: 620px;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #4a5b70;
+  margin: 0;
+}
+
+/* ── Body ── */
+.ct-body {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 4rem;
+  width: 100%;
+}
+
+.ct-card {
+  background: #ffffff;
+  border: 1px solid #e3eaf3;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 28px -18px rgba(15, 23, 42, 0.18);
+  padding: 2rem 2rem 2.1rem;
+}
+
+.ct-card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #16386e;
+  margin: 0 0 0.35rem;
+}
+
+.ct-card-sub {
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #64748b;
+  margin: 0 0 1.5rem;
+}
+
+/* ── Fields ── */
+.ct-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.ct-field {
+  margin-bottom: 1rem;
+}
+
+.ct-field label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #334155;
+  margin-bottom: 0.35rem;
+}
+
+.ct-field label span {
+  color: #dc2626;
+}
+
+.ct-field input,
+.ct-field select,
+.ct-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: #0f172a;
+  background: #ffffff;
+  border: 1px solid #d7e0eb;
+  border-radius: 7px;
+  padding: 0.6rem 0.75rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ct-field textarea {
+  resize: vertical;
+  min-height: 118px;
+  line-height: 1.65;
+}
+
+.ct-field input::placeholder,
+.ct-field textarea::placeholder {
+  color: #9aa8b8;
+}
+
+.ct-field input:focus,
+.ct-field select:focus,
+.ct-field textarea:focus {
+  outline: none;
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+}
+
+.ct-field select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  padding-right: 2.2rem;
+}
+
+/* ── Honeypot: present in the DOM, never on screen ── */
+.ct-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── "I'm not a robot" ── */
+.ct-robot {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid #d7e0eb;
+  border-radius: 7px;
+  background: #fbfdff;
+  padding: 0.7rem 0.85rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ct-robot input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.ct-robot-box {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  border: 1.5px solid #b9c6d6;
+  border-radius: 3px;
+  background: #ffffff;
+  position: relative;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ct-robot input:checked + .ct-robot-box {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.ct-robot input:checked + .ct-robot-box::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.ct-robot input:focus-visible + .ct-robot-box {
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
+}
+
+.ct-robot-text {
+  font-size: 0.82rem;
+  color: #334155;
+}
+
+.ct-robot-badge {
+  margin-left: auto;
+  color: #9aa8b8;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Submit ── */
+.ct-submit {
+  margin-top: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: 7px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.5rem;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.ct-submit:hover:not(:disabled) {
+  background: #1a43b8;
+}
+
+.ct-submit:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.ct-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ── Errors / success ── */
+.ct-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  border-radius: 7px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 1.1rem;
+}
+
+.ct-sent {
+  text-align: center;
+  padding: 2.6rem 2rem;
+}
+
+.ct-sent-icon {
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  background: #e8f7ee;
+  color: #12854a;
+  font-size: 1.35rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ct-sent h2 {
+  font-size: 1.15rem;
+  color: #16386e;
+  margin: 0 0 0.5rem;
+}
+
+.ct-sent p {
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: #4a5b70;
+  margin: 0 auto 0.6rem;
+  max-width: 430px;
+}
+
+.ct-sent-alt {
+  color: #64748b !important;
+}
+
+.ct-sent-alt a,
+.ct-alt-contact a {
+  color: #1d4ed8;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.ct-sent-alt a:hover,
+.ct-alt-contact a:hover {
+  text-decoration: underline;
+}
+
+.ct-link-btn {
+  margin-top: 0.9rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #1d4ed8;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.ct-alt-contact {
+  text-align: center;
+  font-size: 0.82rem;
+  color: #64748b;
+  margin: 1.5rem 0 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 620px) {
+  .ct-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .ct-card {
+    padding: 1.5rem 1.25rem 1.7rem;
+  }
+
+  .ct-hero {
+    padding: 2.25rem 1.25rem 2rem;
+  }
+}
