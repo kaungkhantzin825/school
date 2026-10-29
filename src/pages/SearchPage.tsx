@@ -119,7 +119,7 @@ const SearchPage = () => {
             <p>
               Verification results are generated based on official data records submitted by accredited
               and registered government universities and colleges in Myanmar. In case of any dispute or
-              clarification, please contact <a href="mailto:example@email.com" style={{ color: '#163172', fontWeight: 600 }}>example@email.com</a>.
+              clarification, please contact <a href="mailto:support@acvr.edu.mm" style={{ color: '#163172', fontWeight: 600 }}>support@acvr.edu.mm</a>.
             </p>
           </div>
         </div>

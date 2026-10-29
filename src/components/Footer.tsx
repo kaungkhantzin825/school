@@ -107,28 +107,8 @@ const Footer = () => {
               </svg>
             </a>
 
-            {/* YouTube */}
-            <a
-              href="https://youtube.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="maver-social-btn youtube"
-              aria-label="YouTube"
-            >
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/>
-                <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="#ff0000"/>
-              </svg>
-            </a>
           </div>
         </div>
-      </div>
-
-      {/* ── Footer Bottom ── */}
-      <div className="maver-footer-bottom">
-        <p className="maver-footer-bottom-text">
-          ACVR · Academic Credential Verification &amp; Registry
-        </p>
       </div>
 
     </footer>

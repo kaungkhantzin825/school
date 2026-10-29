@@ -56,10 +56,13 @@
 }
 
 /* ── Footer Right (Copyright + Social) ── */
+/* Centred so the icon row sits under the middle of the copyright line —
+   right-aligning them left the two icons visibly off-centre against the
+   wider text above. */
 .maver-footer-right {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 0.75rem;
 }
 
@@ -97,24 +100,6 @@
 
 .maver-social-btn.facebook  { background: #1877f2; }
 .maver-social-btn.linkedin  { background: #0a66c2; }
-.maver-social-btn.youtube   { background: #ff0000; }
-
-/* ── Bottom Divider Bar ── */
-.maver-footer-bottom {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0.65rem 2.5rem;
-  max-width: 1280px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.maver-footer-bottom-text {
-  font-size: 0.73rem;
-  color: #7a736e;
-  text-align: center;
-}
 
 /* ── Responsive ── */
 @media (max-width: 640px) {
@@ -130,9 +115,5 @@
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-  }
-
-  .maver-footer-bottom {
-    padding: 0.65rem 1.25rem;
   }
 }

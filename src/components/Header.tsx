@@ -78,13 +78,9 @@ const Header = () => {
           >
             University Search
           </a>
-          <a
-            className="maver-subnav-link"
-            onClick={() => navigate('/coming-soon', { state: { title: 'News & Announcement' } })}
-            style={{ cursor: 'pointer' }}
-          >
-            News &amp; Announcement
-          </a>
+          {/* "News & Announcement" is hidden until the section exists — it
+              only led to the Coming Soon placeholder. Restore the link here
+              when there is real content to point at. */}
         </div>
       </div>
 
