@@ -72,9 +72,9 @@ const UniversityInfoPage = () => {
             )}
 
             <div className="info-pills">
-              <span className="info-pill">✅ Officially Registered</span>
+              <span className="info-pill">✅ Officially Confirmed</span>
               <span className="info-pill">🔒 Secure Verification</span>
-              <span className="info-pill">⚡ Instant Results</span>
+              <span className="info-pill">🕒 2 – 7 days turnaround time</span>
             </div>
 
             {!isAuthenticated() && (

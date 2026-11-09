@@ -17,6 +17,8 @@ interface Student {
   date_of_birth: string;
   nrc_number: string;
   student_id: string;
+  /** Physical archive ledger reference, e.g. "TU-Civil-File8/Column 4-Page 2". */
+  archive_ref?: string | null;
   degree: string;
   specialization: string;
   graduation_year: number;
@@ -242,6 +244,7 @@ const UserAdminDashboard = () => {
     date_of_birth: '',
     nrc_number: '',
     student_id: '',
+    archive_ref: '',
     degree: '',
     specialization: '',
     graduation_year: new Date().getFullYear(),
@@ -279,6 +282,7 @@ const UserAdminDashboard = () => {
       date_of_birth: '',
       nrc_number: '',
       student_id: '',
+      archive_ref: '',
       degree: '',
       specialization: '',
       graduation_year: new Date().getFullYear(),
@@ -804,15 +808,16 @@ const UserAdminDashboard = () => {
                       <th>NRC Number</th>
                       <th>Degree</th>
                       <th>Year</th>
+                      <th>Archive Ledger Ref.</th>
                       <th>Data Entry Date &amp; Time</th>
                       <th className="ud-action-cell">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {loading ? (
-                      <tr><td colSpan={10} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Loading students...</td></tr>
+                      <tr><td colSpan={11} style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>Loading students...</td></tr>
                     ) : stuPaged.length === 0 ? (
-                      <tr><td colSpan={10}>
+                      <tr><td colSpan={11}>
                         <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3rem', color: '#94a3b8', textAlign: 'center' }}>
                           <span style={{ fontSize: '3rem' }}>👨‍🎓</span>
                           <p>No students found. {studentSearch ? 'Try a different search.' : 'Upload a CSV to get started.'}</p>
@@ -849,6 +854,11 @@ const UserAdminDashboard = () => {
                           <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '2px 8px', borderRadius: '100px', fontSize: '0.78rem', fontWeight: 600 }}>
                             {s.graduation_year}
                           </span>
+                        </td>
+                        <td className="ud-archive-cell">
+                          {s.archive_ref
+                            ? <span className="ud-archive-ref" title={s.archive_ref}>{s.archive_ref}</span>
+                            : <span style={{ color: '#cbd5e1' }}>—</span>}
                         </td>
                         <td className="ud-entry-cell">
                           {(() => {
@@ -1661,6 +1671,24 @@ const UserAdminDashboard = () => {
                     />
                   </div>
 
+                  {/* University Archive Ledger Reference */}
+                  <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
+                      University Archive Ledger Reference <span className="optional" style={{ fontWeight: 400, color: '#94a3b8' }}>(Book / Volume / Roll No.)</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="modal-input"
+                      value={studentForm.archive_ref}
+                      onChange={e => setSF('archive_ref', e.target.value)}
+                      placeholder="e.g. TU-Civil-File8/Column 4-Page 2"
+                      style={{ width: '100%', padding: '0.625rem 0.875rem', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '0.875rem' }}
+                    />
+                    <span style={{ display: 'block', marginTop: '0.25rem', fontSize: '0.75rem', color: '#94a3b8' }}>
+                      Where this award is recorded in the physical register — provides provenance for audit trails.
+                    </span>
+                  </div>
+
                   {/* Degree */}
                   <div className="form-group">
                     <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#334155' }}>
@@ -2007,6 +2035,7 @@ const UserAdminDashboard = () => {
                 ['NRC Number', detailStudent.nrc_number || '—'],
                 ['Graduate Reg. Number', detailStudent.student_id || '—'],
                 ['Graduation Year', String(detailStudent.graduation_year ?? '—')],
+                ['University Archive Ledger Ref.', detailStudent.archive_ref || '—'],
                 ['University', detailStudent.university?.name || user?.university?.name || '—'],
                 ['Data Entry Date & Time', (() => { const e = fmtEntryDate(detailStudent.created_at); return e ? `${e.date}, ${e.time}` : '—'; })()],
               ] as [string, string][]).map(([label, value]) => (

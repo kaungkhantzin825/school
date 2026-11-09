@@ -889,3 +889,27 @@
   color: #94a3b8;
   margin-top: 1px;
 }
+
+/* Archive ledger reference — can be a long string like
+   "TU-Civil-File8/Column 4-Page 2", so it is clamped and shown in full on
+   hover rather than stretching the table. */
+.ud-archive-cell {
+  max-width: 190px;
+  font-size: 0.8rem;
+}
+
+.ud-archive-ref {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 2px 8px;
+  color: #334155;
+  font-family: 'Courier New', monospace;
+  font-size: 0.76rem;
+}

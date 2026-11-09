@@ -373,6 +373,7 @@ const VerifierDashboard = () => {
                   <thead>
                     <tr>
                       <th className="col-no">No.</th>
+                      <th className="col-center">Verified Timestamp</th>
                       <th>Photo</th>
                       <th>University Name</th>
                       <th>Graduate Name</th>
@@ -382,7 +383,6 @@ const VerifierDashboard = () => {
                       <th>NRC Number</th>
                       <th>Degree / Specialization</th>
                       <th className="col-center">Graduation Year</th>
-                      <th className="col-center">Date &amp; Time</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -396,6 +396,9 @@ const VerifierDashboard = () => {
                       verified.map((log, idx) => (
                         <tr key={log.id}>
                           <td className="col-no">{idx + 1}</td>
+                          <td className="col-center col-datetime">
+                            <DateTimeCell value={log.created_at} />
+                          </td>
                           <td>
                             <StudentPhoto
                               photoUrl={log.student?.photo_url}
@@ -414,9 +417,6 @@ const VerifierDashboard = () => {
                           <td>{formatDegree(log)}</td>
                           <td className="col-center col-year">
                             {log.student?.graduation_year || log.searched_year}
-                          </td>
-                          <td className="col-center col-datetime">
-                            <DateTimeCell value={log.created_at} />
                           </td>
                         </tr>
                       ))
