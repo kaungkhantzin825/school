@@ -37,6 +37,17 @@ const VerificationFormPage = () => {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
 
+  /* Which method is on screen. Typing the details is the common path, so it
+     opens first; the upload route is for older Myanmar-language certificates. */
+  const [method, setMethod] = useState<'details' | 'upload'>('details');
+
+  /** Switching tabs drops the other panel's stale error message. */
+  const switchMethod = (next: 'details' | 'upload') => {
+    setMethod(next);
+    setError('');
+    setDocError('');
+  };
+
   /* ── Certificate upload (older Myanmar-language degrees) ── */
   const [docFile,     setDocFile]     = useState<File | null>(null);
   const [docNotes,    setDocNotes]    = useState('');
@@ -232,19 +243,58 @@ const VerificationFormPage = () => {
 
           <h2 className="vf-method-heading">Please select one verification method below:</h2>
 
-          <div className="vf-split">
+          {/* Tabs rather than two side-by-side forms: only one method is ever
+              submitted, and showing both at once made the page long enough to
+              scroll on a phone while implying both had to be filled in. */}
+          <div className="vf-tabs" role="tablist" aria-label="Verification method">
+            <button
+              type="button"
+              role="tab"
+              id="vf-tab-details"
+              aria-selected={method === 'details'}
+              aria-controls="vf-panel-details"
+              className={`vf-tab ${method === 'details' ? 'is-active' : ''}`}
+              onClick={() => switchMethod('details')}
+            >
+              <span className="vf-tab-icon" aria-hidden="true">📝</span>
+              <span className="vf-tab-text">
+                <strong>Enter the details</strong>
+                <small>Instant if the record is in our registry</small>
+              </span>
+            </button>
 
-            {/* ── Left: raise the request by uploading the certificate ── */}
-            <form className="form-body vf-upload-panel" onSubmit={handleDocumentSubmit}>
-              <div className="vf-panel-head">
-                <h3 className="vf-panel-title">
-                  Upload the Degree certificate (or) Notary Translation
-                </h3>
-                <p className="vf-panel-sub">
-                  For older certificates written in Myanmar. Our registrar reads the
-                  document and checks it against the university's archive.
-                </p>
-              </div>
+            <button
+              type="button"
+              role="tab"
+              id="vf-tab-upload"
+              aria-selected={method === 'upload'}
+              aria-controls="vf-panel-upload"
+              className={`vf-tab ${method === 'upload' ? 'is-active' : ''}`}
+              onClick={() => switchMethod('upload')}
+            >
+              <span className="vf-tab-icon" aria-hidden="true">📎</span>
+              <span className="vf-tab-text">
+                <strong>Upload the certificate</strong>
+                <small>For older Myanmar-language documents</small>
+              </span>
+            </button>
+          </div>
+
+          <div className="vf-panels">
+
+            {/* ── Upload the certificate ── */}
+            <form
+              role="tabpanel"
+              id="vf-panel-upload"
+              aria-labelledby="vf-tab-upload"
+              hidden={method !== 'upload'}
+              className="form-body vf-upload-panel"
+              onSubmit={handleDocumentSubmit}
+            >
+              <p className="vf-panel-sub">
+                Upload the Degree certificate or a notary translation. Our registrar
+                reads the document and checks it against the university's archive.
+              </p>
 
               <div
                 className={`vf-dropzone ${docDragOver ? 'is-over' : ''} ${docFile ? 'has-file' : ''}`}
@@ -319,17 +369,19 @@ const VerificationFormPage = () => {
               </button>
             </form>
 
-            <div className="vf-or" aria-hidden="true"><span>(OR)</span></div>
-
-            {/* ── Right: raise the request by typing the details ── */}
-            <form className="form-body" onSubmit={handleSubmit}>
-              <div className="vf-panel-head">
-                <h3 className="vf-panel-title">Enter the details instead</h3>
-                <p className="vf-panel-sub">
-                  If the graduate's record exists in our digital registry,
-                  verification will be instant.
-                </p>
-              </div>
+            {/* ── Type the details ── */}
+            <form
+              role="tabpanel"
+              id="vf-panel-details"
+              aria-labelledby="vf-tab-details"
+              hidden={method !== 'details'}
+              className="form-body"
+              onSubmit={handleSubmit}
+            >
+              <p className="vf-panel-sub">
+                Enter the graduate's details exactly as they appear on the certificate.
+                If the record exists in our digital registry, verification is instant.
+              </p>
 
               {error && (
                 <div style={{
@@ -432,7 +484,7 @@ const VerificationFormPage = () => {
           </div>
 
           {/* One Back button for the whole page, so neither panel owns it. */}
-          <div className="vf-split-foot">
+          <div className="vf-panels-foot">
             <button type="button" className="btn-back-sm" onClick={() => navigate(-1)}>
               ← Back
             </button>

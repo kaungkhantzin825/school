@@ -252,60 +252,90 @@ textarea.form-control {
 
 /* ── Two ways to raise a request: upload the certificate, or type it ── */
 
-/* Wider than the single-column card so both panels get usable room. */
+/* Only one form shows at a time now, so the card no longer needs the extra
+   width the two side-by-side panels required. */
 .form-card-split {
-  max-width: 1080px;
-}
-
-.vf-split {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: stretch;
-}
-
-.vf-panel-head {
-  margin-bottom: 1.25rem;
-}
-
-.vf-panel-title {
-  font-size: 0.98rem;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1.4;
-  margin-bottom: 0.4rem;
+  max-width: 760px;
 }
 
 .vf-panel-sub {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: #64748b;
   line-height: 1.55;
+  margin-bottom: 1.35rem;
 }
 
-/* ── "(OR)" divider between the two panels ── */
-.vf-or {
-  position: relative;
+/* ── Method tabs ──
+   Only one method is ever submitted, so the two forms are tabs rather than
+   side-by-side panels: it halves the page height and removes the impression
+   that both have to be filled in. */
+.vf-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  padding: 0 2rem 1.25rem;
+}
+
+.vf-tab {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 1rem;
-  color: #94a3b8;
-  font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: 0.08em;
-  white-space: nowrap;
+  align-items: flex-start;
+  gap: 0.7rem;
+  text-align: left;
+  padding: 0.85rem 1rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Dashed rule above and below the label, centred on the divider column. */
-.vf-or::before,
-.vf-or::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  border-left: 1px dashed #e2e8f0;
+.vf-tab:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
 }
-.vf-or::before { top: 2rem; bottom: calc(50% + 1.4rem); }
-.vf-or::after  { top: calc(50% + 1.4rem); bottom: 2rem; }
+
+/* The selected method reads as a filled card, not just a coloured border —
+   at a glance it must be obvious which form is about to be submitted. */
+.vf-tab.is-active {
+  border-color: #1d4ed8;
+  background: #eff6ff;
+  box-shadow: 0 2px 10px rgba(29, 78, 216, 0.12);
+}
+
+.vf-tab:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+.vf-tab-icon {
+  font-size: 1.15rem;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.vf-tab-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.vf-tab-text strong {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.vf-tab.is-active .vf-tab-text strong {
+  color: #1d4ed8;
+}
+
+.vf-tab-text small {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.4;
+}
 
 /* ── Upload panel ── */
 .vf-upload-panel {
@@ -436,38 +466,24 @@ textarea.form-control {
 }
 
 /* One Back button for the whole page. */
-.vf-split-foot {
+.vf-panels-foot {
   padding: 0 2rem 2rem;
 }
 
-/* ── Responsive: stack the panels, flip "(OR)" to a horizontal rule ── */
+/* ── Responsive ── */
 @media (max-width: 900px) {
-  .vf-split {
-    grid-template-columns: 1fr;
-  }
-
   .vf-method-heading {
     padding: 1.5rem 1.25rem 0;
     font-size: 0.98rem;
   }
 
-  .vf-or {
-    padding: 1.5rem 0;
+  /* Tabs stack so each label stays readable instead of wrapping awkwardly. */
+  .vf-tabs {
+    grid-template-columns: 1fr;
+    padding: 0 1.25rem 1rem;
   }
 
-  .vf-or::before,
-  .vf-or::after {
-    left: 2rem;
-    right: 2rem;
-    width: auto;
-    transform: none;
-    border-left: none;
-    border-top: 1px dashed #e2e8f0;
-  }
-  .vf-or::before { top: 1.5rem; bottom: auto; }
-  .vf-or::after  { top: auto; bottom: 1.5rem; }
-
-  .vf-split-foot {
+  .vf-panels-foot {
     padding: 0 2rem 1.5rem;
   }
 }
