@@ -15,7 +15,7 @@ const Header = () => {
 
         {/* Logo */}
         <a className="maver-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-          <img src="/logo-3.png" alt="MAVER Logo" className="maver-logo-img" />
+          <img src="/acvr-logo.png" alt="ACVR — Academic Credential Verification &amp; Registry" className="maver-logo-img" />
         </a>
 
         {/* Nav Links */}

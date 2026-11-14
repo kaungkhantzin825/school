@@ -76,7 +76,7 @@ const LoginPage = () => {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <img src="/logo-3.png" alt="ACVR" className="auth-logo" />
+        <img src="/acvr-logo.png" alt="ACVR" className="auth-logo" />
 
         {redirectTo && (
           <div className="auth-context">

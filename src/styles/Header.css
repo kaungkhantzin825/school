@@ -30,8 +30,11 @@
   flex-shrink: 0;
 }
 
+/* The ACVR mark is a stacked lockup (cap + wordmark above, two lines of
+   sub-title below), so a little extra height keeps the sub-title legible.
+   width:auto keeps it proportional — never set both. */
 .maver-logo-img {
-  height: 52px;
+  height: 58px;
   width: auto;
   object-fit: contain;
   display: block;

@@ -152,7 +152,7 @@ const RegisterPage = () => {
     return (
       <div className="auth-page">
         <div className="auth-card">
-          <img src="/logo-3.png" alt="ACVR" className="auth-logo" />
+          <img src="/acvr-logo.png" alt="ACVR" className="auth-logo" />
           <div className="auth-success">
             <div className="auth-success-icon">🎉</div>
             <h1>Registration Successful!</h1>
@@ -177,7 +177,7 @@ const RegisterPage = () => {
   return (
     <div className="auth-page">
       <div className="auth-card auth-card-wide">
-        <img src="/logo-3.png" alt="ACVR" className="auth-logo" />
+        <img src="/acvr-logo.png" alt="ACVR" className="auth-logo" />
 
         {redirectTo && (
           <div className="auth-context">

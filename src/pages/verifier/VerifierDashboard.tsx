@@ -133,11 +133,23 @@ const VerifierDashboard = () => {
   /** Row shown in the rejection detail modal. */
   const [detailLog, setDetailLog] = useState<LogRow | null>(null);
 
+  /**
+   * Row numbering counts up from the oldest request, so a given enquiry keeps
+   * the same number as newer ones arrive. The lists come back newest-first, so
+   * the top row carries the highest number. Totals come from the paginated
+   * response — using the loaded array length would restart the count on page 2.
+   */
+  const [totals, setTotals] = useState({ verified: 0, pending: 0, rejected: 0 });
+
+  const rowNumber = (total: number, idx: number) => Math.max(total - idx, 1);
+
   const fetchVerified = async () => {
     setLoading(true);
     try {
       const res = await verificationAPI.getLogs({ status: 'success' });
-      setVerified(res.data.data || res.data);
+      const rows = res.data.data || res.data;
+      setVerified(rows);
+      setTotals(t => ({ ...t, verified: res.data.total ?? rows.length }));
     } catch {
       setVerified([]);
     } finally {
@@ -149,7 +161,9 @@ const VerifierDashboard = () => {
     setLoading(true);
     try {
       const res = await verificationAPI.getLogs({ status: 'pending' });
-      setPending(res.data.data || res.data);
+      const rows = res.data.data || res.data;
+      setPending(rows);
+      setTotals(t => ({ ...t, pending: res.data.total ?? rows.length }));
     } catch {
       setPending([]);
     } finally {
@@ -166,7 +180,9 @@ const VerifierDashboard = () => {
     setLoading(true);
     try {
       const res = await verificationAPI.getLogs({ rejected: 1 });
-      setRejected(res.data.data || res.data);
+      const rows = res.data.data || res.data;
+      setRejected(rows);
+      setTotals(t => ({ ...t, rejected: res.data.total ?? rows.length }));
     } catch {
       setRejected([]);
     } finally {
@@ -395,7 +411,7 @@ const VerifierDashboard = () => {
                     ) : (
                       verified.map((log, idx) => (
                         <tr key={log.id}>
-                          <td className="col-no">{idx + 1}</td>
+                          <td className="col-no">{rowNumber(totals.verified, idx)}</td>
                           <td className="col-center col-datetime">
                             <DateTimeCell value={log.created_at} />
                           </td>
@@ -464,7 +480,7 @@ const VerifierDashboard = () => {
                         const displayRef = reqId.startsWith('#') ? reqId : `#${reqId}`;
                         return (
                           <tr key={log.id}>
-                            <td className="col-no">{idx + 1}</td>
+                            <td className="col-no">{rowNumber(totals.pending, idx)}</td>
                             <td className="col-ref">{displayRef}</td>
                             <td className="col-bold">{log.searched_name}</td>
                             <td>
@@ -550,7 +566,7 @@ const VerifierDashboard = () => {
                         const displayRef = reqId.startsWith('#') ? reqId : `#${reqId}`;
                         return (
                           <tr key={log.id}>
-                            <td className="col-no">{idx + 1}</td>
+                            <td className="col-no">{rowNumber(totals.rejected, idx)}</td>
                             <td className="col-ref">{displayRef}</td>
                             <td className="col-bold">{log.searched_name}</td>
                             <td>

@@ -37,17 +37,6 @@ const VerificationFormPage = () => {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState('');
 
-  /* Which method is on screen. Typing the details is the common path, so it
-     opens first; the upload route is for older Myanmar-language certificates. */
-  const [method, setMethod] = useState<'details' | 'upload'>('details');
-
-  /** Switching tabs drops the other panel's stale error message. */
-  const switchMethod = (next: 'details' | 'upload') => {
-    setMethod(next);
-    setError('');
-    setDocError('');
-  };
-
   /* ── Certificate upload (older Myanmar-language degrees) ── */
   const [docFile,     setDocFile]     = useState<File | null>(null);
   const [docNotes,    setDocNotes]    = useState('');
@@ -219,7 +208,7 @@ const VerificationFormPage = () => {
             <UniversityLogo logoUrl={university.logo_url} name={university.name} size={52} tile />
             <div className="form-banner-text">
               <h2>{university.name}</h2>
-              <p>📍 {university.location}</p>
+              <p>VERIFICATION FORM</p>
             </div>
           </div>
 
@@ -231,70 +220,39 @@ const VerificationFormPage = () => {
             </div>
             <div className="step-connector done" />
             <div className="step">
-              <span className="step-num active">2</span>
+              <span className="step-num active">✎</span>
               <span className="step-label active">Fill Form</span>
             </div>
             <div className="step-connector" />
             <div className="step">
-              <span className="step-num">3</span>
+              <span className="step-num">📊</span>
               <span className="step-label">Result</span>
             </div>
           </div>
 
           <h2 className="vf-method-heading">Please select one verification method below:</h2>
 
-          {/* Tabs rather than two side-by-side forms: only one method is ever
-              submitted, and showing both at once made the page long enough to
-              scroll on a phone while implying both had to be filled in. */}
-          <div className="vf-tabs" role="tablist" aria-label="Verification method">
-            <button
-              type="button"
-              role="tab"
-              id="vf-tab-details"
-              aria-selected={method === 'details'}
-              aria-controls="vf-panel-details"
-              className={`vf-tab ${method === 'details' ? 'is-active' : ''}`}
-              onClick={() => switchMethod('details')}
-            >
-              <span className="vf-tab-icon" aria-hidden="true">📝</span>
-              <span className="vf-tab-text">
-                <strong>Enter the details</strong>
-                <small>Instant if the record is in our registry</small>
-              </span>
-            </button>
-
-            <button
-              type="button"
-              role="tab"
-              id="vf-tab-upload"
-              aria-selected={method === 'upload'}
-              aria-controls="vf-panel-upload"
-              className={`vf-tab ${method === 'upload' ? 'is-active' : ''}`}
-              onClick={() => switchMethod('upload')}
-            >
-              <span className="vf-tab-icon" aria-hidden="true">📎</span>
-              <span className="vf-tab-text">
-                <strong>Upload the certificate</strong>
-                <small>For older Myanmar-language documents</small>
-              </span>
-            </button>
-          </div>
-
-          <div className="vf-panels">
+          {/* Two panels side by side, separated by an "(OR)" divider. Both
+              forms are visible at once so the reader can compare them, but
+              only one is ever submitted — each panel has its own submit
+              button and its own error state. */}
+          <div className="vf-split">
 
             {/* ── Upload the certificate ── */}
             <form
-              role="tabpanel"
-              id="vf-panel-upload"
-              aria-labelledby="vf-tab-upload"
-              hidden={method !== 'upload'}
-              className="form-body vf-upload-panel"
+              className="vf-panel"
               onSubmit={handleDocumentSubmit}
             >
-              <p className="vf-panel-sub">
-                Upload the Degree certificate or a notary translation. Our registrar
-                reads the document and checks it against the university's archive.
-              </p>
+              <div className="vf-panel-head">
+                <h3 className="vf-panel-title">
+                  <span className="vf-panel-icon" aria-hidden="true">⬆</span>
+                  Upload the Degree Certificate (or) Notary Translation
+                </h3>
+                <p className="vf-panel-desc">
+                  For older certificates written in Myanmar. Our registrar reads the
+                  document and checks it against the university's archive.
+                </p>
+              </div>
 
               <div
                 className={`vf-dropzone ${docDragOver ? 'is-over' : ''} ${docFile ? 'has-file' : ''}`}
@@ -324,7 +282,7 @@ const VerificationFormPage = () => {
                 ) : (
                   <>
                     <div className="vf-upload-btn">
-                      <span aria-hidden="true">⬆</span> Upload the file
+                      <span aria-hidden="true">⊕</span> Upload Certificate (JPG, PNG, PDF, max 5MB)
                     </div>
                     <div className="vf-drop-meta">Supported formats:</div>
                     <div className="vf-formats">
@@ -364,30 +322,35 @@ const VerificationFormPage = () => {
                 {docLoading ? (
                   <><div className="submit-spinner" /> Submitting...</>
                 ) : (
-                  '🔍 Submit Verification'
+                  <>🔍 SUBMIT VERIFICATION</>
                 )}
               </button>
             </form>
 
+            {/* ── The "(OR)" divider ── */}
+            <div className="vf-or" aria-hidden="true">
+              <span className="vf-or-line" />
+              <span className="vf-or-label">(OR)</span>
+              <span className="vf-or-line" />
+            </div>
+
             {/* ── Type the details ── */}
             <form
-              role="tabpanel"
-              id="vf-panel-details"
-              aria-labelledby="vf-tab-details"
-              hidden={method !== 'details'}
-              className="form-body"
+              className="vf-panel vf-panel-details"
               onSubmit={handleSubmit}
             >
-              <p className="vf-panel-sub">
-                Enter the graduate's details exactly as they appear on the certificate.
-                If the record exists in our digital registry, verification is instant.
-              </p>
+              <div className="vf-panel-head">
+                <h3 className="vf-panel-title">
+                  <span className="vf-panel-icon" aria-hidden="true">📝</span>
+                  Enter the details instead
+                </h3>
+                <p className="vf-panel-desc">
+                  If the graduate's record exists in our digital registry, verification will be instant.
+                </p>
+              </div>
 
               {error && (
-                <div style={{
-                  background: '#fee2e2', color: '#dc2626', borderRadius: '10px',
-                  padding: '0.75rem 1rem', fontSize: '0.88rem', marginBottom: '1.25rem'
-                }}>
+                <div className="vf-error">
                   ⚠️ {error}
                 </div>
               )}
@@ -467,19 +430,17 @@ const VerificationFormPage = () => {
                 />
               </div>
 
-              <div className="form-actions">
-                <button
-                  type="submit"
-                  className="btn-submit"
-                  disabled={loading || degLoading || degrees.length === 0}
-                >
-                  {loading ? (
-                    <><div className="submit-spinner" /> Verifying...</>
-                  ) : (
-                    '🔍 Submit Verification'
-                  )}
-                </button>
-              </div>
+              <button
+                type="submit"
+                className="btn-submit"
+                disabled={loading || degLoading || degrees.length === 0}
+              >
+                {loading ? (
+                  <><div className="submit-spinner" /> Verifying...</>
+                ) : (
+                  <>🔍 SUBMIT VERIFICATION</>
+                )}
+              </button>
             </form>
           </div>
 

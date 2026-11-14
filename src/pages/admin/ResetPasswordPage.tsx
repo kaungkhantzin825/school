@@ -48,7 +48,7 @@ const ResetPasswordPage = () => {
     return (
       <div className="auth-page">
         <div className="auth-card">
-          <img src="/logo-3.png" alt="ACVR" className="auth-logo" />
+          <img src="/acvr-logo.png" alt="ACVR" className="auth-logo" />
 
           <h1 className="auth-title">Invalid reset link</h1>
           <p className="auth-subtitle">
@@ -76,7 +76,7 @@ const ResetPasswordPage = () => {
     return (
       <div className="auth-page">
         <div className="auth-card">
-          <img src="/logo-3.png" alt="ACVR" className="auth-logo" />
+          <img src="/acvr-logo.png" alt="ACVR" className="auth-logo" />
 
           <div className="auth-success">
             <div className="auth-success-icon">✅</div>
@@ -138,7 +138,7 @@ const ResetPasswordPage = () => {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <img src="/logo-3.png" alt="ACVR" className="auth-logo" />
+        <img src="/acvr-logo.png" alt="ACVR" className="auth-logo" />
 
         <h1 className="auth-title">Choose a new password</h1>
         <p className="auth-subtitle">

@@ -43,7 +43,7 @@ const ForgotPasswordPage = () => {
     return (
       <div className="auth-page">
         <div className="auth-card">
-          <img src="/logo-3.png" alt="ACVR" className="auth-logo" />
+          <img src="/acvr-logo.png" alt="ACVR" className="auth-logo" />
 
           <div className="auth-success">
             <div className="auth-success-icon">✉️</div>
@@ -69,7 +69,7 @@ const ForgotPasswordPage = () => {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <img src="/logo-3.png" alt="ACVR" className="auth-logo" />
+        <img src="/acvr-logo.png" alt="ACVR" className="auth-logo" />
 
         <h1 className="auth-title">Reset your password</h1>
         <p className="auth-subtitle">
